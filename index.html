@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mes Indispos — Sono & Accueil 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    color: #1f2937;
+    overflow-x: hidden;
+  }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 32px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen { display: none; animation: slideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94); flex: 1; flex-direction: column; }
+  .screen.active { display: flex; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 24px;
+    padding: 28px 22px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.08);
+    backdrop-filter: blur(10px);
+  }
+  .brand-header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+  }
+  .brand-header .emoji {
+    font-size: 56px;
+    display: inline-block;
+    animation: wiggle 3s ease-in-out infinite;
+  }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+  }
+  .brand-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 8px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  .brand-header p {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-top: 4px;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .btn {
+    width: 100%;
+    padding: 16px 22px;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  }
+  .btn-primary:active { transform: scale(0.97); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+  .btn-primary:disabled {
+    background: #d1d5db;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: #f3f4f6;
+    color: #4b5563;
+    margin-top: 12px;
+  }
+  .btn-secondary:active { background: #e5e7eb; }
+  .btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  }
+  .search-input, select, input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #1f2937;
+    background: white;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus, select:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: #6366f1;
+  }
+  .freres-list {
+    max-height: 50vh;
+    overflow-y: auto;
+    margin-top: 16px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+  }
+  .frere-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .frere-item:last-child { border-bottom: none; }
+  .frere-item:active, .frere-item.selected {
+    background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+    color: #6366f1;
+    font-weight: 600;
+  }
+  .months-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .month-card {
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 18px;
+    padding: 20px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .month-card:active { transform: scale(0.96); }
+  .month-card .emoji { font-size: 32px; display: block; margin-bottom: 6px; }
+  .month-card .name { font-size: 15px; font-weight: 600; color: #1f2937; }
+  .month-card.done {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  }
+  .month-card.done::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: #10b981;
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .date-row {
+    background: white;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    animation: fadeInUp 0.3s ease-out backwards;
+  }
+  .date-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 10px;
+    text-transform: capitalize;
+  }
+  .date-label .time {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+  .toggle-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    background: #f9fafb;
+    padding: 4px;
+    border-radius: 12px;
+  }
+  .toggle-btn {
+    padding: 10px 4px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #6b7280;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .toggle-btn .icon { font-size: 18px; }
+  .toggle-btn.active[data-state="dispo"] {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+  }
+  .toggle-btn.active[data-state="indispo"] {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  }
+  .toggle-btn.active[data-state="particip"] {
+    background: #f59e0b;
+    color: white;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+  }
+  .particip-input {
+    margin-top: 10px;
+    animation: fadeInUp 0.25s ease-out;
+  }
+  .particip-input input {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-color: #fcd34d;
+    background: #fffbeb;
+  }
+  .particip-input input::placeholder { color: #d97706; }
+  .progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transition: width 0.4s ease;
+    border-radius: 3px;
+  }
+  .recap-month {
+    background: white;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .recap-month-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: #1f2937;
+  }
+  .recap-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .recap-stat {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .recap-stat.dispo { background: #d1fae5; color: #065f46; }
+  .recap-stat.indispo { background: #fee2e2; color: #991b1b; }
+  .recap-stat.particip { background: #fef3c7; color: #92400e; }
+  .success-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .success-screen .big-emoji {
+    font-size: 80px;
+    animation: bounce 0.8s ease;
+  }
+  @keyframes bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  .success-screen h2 { font-size: 26px; margin-top: 12px; }
+  .success-screen p { margin-top: 10px; color: #6b7280; }
+  .loader {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg {
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-top: 12px;
+    border-left: 3px solid #ef4444;
+  }
+  .footer-sig {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    margin-top: 20px;
+    padding-bottom: 10px;
+  }
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confettiFall 3s linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+  .legend {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #6b7280;
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .month-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f3f4f6;
+  }
+  .back-btn {
+    background: #f3f4f6;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    color: #4b5563;
+    flex-shrink: 0;
+  }
+  .back-btn:active { background: #e5e7eb; }
+  .month-header-title { flex: 1; }
+  .month-header-title h2 { font-size: 18px; margin: 0; }
+  .month-header-title p { font-size: 12px; color: #9ca3af; margin: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ÉCRAN 1 : Accueil -->
+  <div class="screen active" id="screen-welcome">
+    <div class="brand-header">
+      <span class="emoji">🎵</span>
+      <h1>Mes Indispos</h1>
+      <p>Sono &amp; Accueil — Mai à Décembre 2026</p>
+    </div>
+    <div class="card">
+      <h2>Salut frère ! 👋</h2>
+      <p class="subtitle">
+        Cette petite appli te permet de renseigner tes <strong>indisponibilités</strong>
+        pour les réunions du <strong>mardi soir (19h00)</strong> et du
+        <strong>samedi après-midi (16h30)</strong>.
+      </p>
+      <p class="subtitle">
+        ✅ Par défaut tu es considéré <strong>disponible</strong> pour toutes les dates.<br>
+        ❌ Tu ne touches que les dates où tu es indisponible.<br>
+        🔶 Si tu as une participation au programme, précise-le.
+      </p>
+      <button class="btn btn-primary" onclick="startApp()">
+        Commencer ✨
+      </button>
+    </div>
+    <div class="footer-sig">BeluSoft-Tchapy © 2026</div>
+  </div>
+
+  <!-- ÉCRAN 2 : Choix du frère -->
+  <div class="screen" id="screen-frere">
+    <div class="brand-header"><span class="emoji">👤</span></div>
+    <div class="card">
+      <h2>Qui es-tu ?</h2>
+      <p class="subtitle">Sélectionne ton nom dans la liste.</p>
+      <input type="text" class="search-input" id="search-frere" placeholder="🔍 Recherche..." oninput="filterFreres()">
+      <div class="freres-list" id="freres-list"></div>
+      <button class="btn btn-primary" id="btn-valider-frere" disabled onclick="validerFrere()">Suivant →</button>
+    </div>
+    <div class="footer-sig">BeluSoft-Tchapy © 2026</div>
+  </div>
+
+  <!-- ÉCRAN 3 : Choix du mois -->
+  <div class="screen" id="screen-mois">
+    <div class="brand-header"><span class="emoji">📅</span></div>
+    <div class="card">
+      <h2>Quel mois ? 📆</h2>
+      <p class="subtitle" id="subtitle-mois">Choisis un mois pour renseigner tes dispos.</p>
+      <div class="months-grid" id="months-grid"></div>
+      <button class="btn btn-secondary" onclick="goBack('screen-frere')">← Changer de frère</button>
+    </div>
+    <div class="footer-sig">BeluSoft-Tchapy © 2026</div>
+  </div>
+
+  <!-- ÉCRAN 4 : Saisie des dates -->
+  <div class="screen" id="screen-dates">
+    <div class="card">
+      <div class="month-header">
+        <button class="back-btn" onclick="goBack('screen-mois')">←</button>
+        <div class="month-header-title">
+          <h2 id="dates-title">Mai 2026</h2>
+          <p id="dates-subtitle">Toutes les dates du mois</p>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">🟢 Dispo</div>
+        <div class="legend-item">🔴 Indispo</div>
+        <div class="legend-item">🟠 Participation</div>
+      </div>
+      <div id="dates-container"></div>
+      <button class="btn btn-primary" onclick="validerMois()">Valider ce mois ✓</button>
+    </div>
+    <div class="footer-sig">BeluSoft-Tchapy © 2026</div>
+  </div>
+
+  <!-- ÉCRAN 5 : Récap & envoi -->
+  <div class="screen" id="screen-recap">
+    <div class="brand-header"><span class="emoji">📤</span></div>
+    <div class="card">
+      <h2>Prêt à envoyer ? 🚀</h2>
+      <p class="subtitle">Voici ton récap. Vérifie et envoie !</p>
+      <div id="recap-container"></div>
+      <button class="btn btn-success" id="btn-envoyer" onclick="envoyer()">
+        <span id="btn-envoyer-label">📤 Envoyer mes dispos</span>
+      </button>
+      <button class="btn btn-secondary" onclick="goBack('screen-mois')">← Modifier</button>
+      <div id="error-msg"></div>
+    </div>
+    <div class="footer-sig">BeluSoft-Tchapy © 2026</div>
+  </div>
+
+  <!-- ÉCRAN 6 : Succès -->
+  <div class="screen" id="screen-success">
+    <div class="card success-screen">
+      <div class="big-emoji">🎉</div>
+      <h2>Merci frère !</h2>
+      <p>Tes disponibilités ont bien été enregistrées.<br>À bientôt au Royaume ! 💙</p>
+      <button class="btn btn-primary" style="margin-top:24px" onclick="restart()">Renseigner un autre mois</button>
+    </div>
+    <div class="footer-sig">BeluSoft-Tchapy © 2026</div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+
+// ⚠️ REMPLACER par l'URL de ton Web App Apps Script après déploiement
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgGFKTALtOfCKQU1kXzdy03-ObIiM3JLk79dZV3WF66U2h6_2_iYh2SLLcOAtSxzhd/exec';
+
+const FRERES = [
+  "Alex A.", "Antoni P.", "Axandre A.", "Axel Z.", "Aymeric G.",
+  "Boris M.", "Bruce M.", "Cedrick S.", "Claude M.", "Credo G.",
+  "Didier M.", "Fabrice S.", "Frédérique R.", "Jean G.", "Jean Philippe L.",
+  "Jean-Michel J.", "Joël D.", "Joël P.", "Junior M.", "Luc B.",
+  "Maïley B.", "Marc H.", "Marc P.", "Marius B.", "Mathieu M.",
+  "Maxime M.", "Raphaël R.", "Robert I.", "Sammy L.", "Samuel G.",
+  "Steeven G.", "Stivy M.", "Terreblanche M.", "Thierry L.", "Thierry V.",
+  "Tommy N.", "Yanis M.", "Yannick D."
+];
+
+const MOIS = [
+  { num: 5,  nom: 'Mai',       emoji: '🌸' },
+  { num: 6,  nom: 'Juin',      emoji: '☀️' },
+  { num: 7,  nom: 'Juillet',   emoji: '🌞' },
+  { num: 8,  nom: 'Août',      emoji: '🏖️' },
+  { num: 9,  nom: 'Septembre', emoji: '🍂' },
+  { num: 10, nom: 'Octobre',   emoji: '🎃' },
+  { num: 11, nom: 'Novembre',  emoji: '🍁' },
+  { num: 12, nom: 'Décembre',  emoji: '❄️' }
+];
+
+const DOW_FR = { 2: 'mardi', 6: 'samedi' };
+const HEURE = { 2: '19h00', 6: '16h30' };
+
+// ═══════════════════════════════════════════════════════════════
+// ÉTAT DE L'APP
+// ═══════════════════════════════════════════════════════════════
+
+const state = {
+  frere: null,
+  moisCourant: null,   // { num, nom, emoji }
+  dispos: {},          // { [dateIso]: { etat: 'dispo'|'indispo'|'particip', nature: '' } }
+  moisRemplis: new Set() // Set<number> — mois terminés dans cette session
+};
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ═══════════════════════════════════════════════════════════════
+
+function getDatesForMonth(monthNum) {
+  const year = 2026;
+  const dates = [];
+  const lastDay = new Date(year, monthNum, 0).getDate();
+  for (let d = 1; d <= lastDay; d++) {
+    const date = new Date(year, monthNum - 1, d);
+    const dow = date.getDay();
+    if (dow === 2 || dow === 6) {
+      dates.push({
+        day: d,
+        dow: dow,
+        iso: `${year}-${String(monthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
+        labelFull: `${DOW_FR[dow]} ${d} ${MOIS.find(m=>m.num===monthNum).nom.toLowerCase()} ${year}`,
+        heure: HEURE[dow]
+      });
+    }
+  }
+  return dates;
+}
+
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+function show(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack(screenId) {
+  vibrate(10);
+  show(screenId);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉCRAN 1 → 2 : Démarrage
+// ═══════════════════════════════════════════════════════════════
+
+function startApp() {
+  vibrate(20);
+  renderFreresList();
+  show('screen-frere');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉCRAN 2 : Sélection du frère
+// ═══════════════════════════════════════════════════════════════
+
+function renderFreresList() {
+  const container = document.getElementById('freres-list');
+  container.innerHTML = '';
+  FRERES.forEach(nom => {
+    const div = document.createElement('div');
+    div.className = 'frere-item';
+    div.textContent = nom;
+    div.dataset.nom = nom;
+    div.onclick = () => selectFrere(nom, div);
+    container.appendChild(div);
+  });
+}
+
+function filterFreres() {
+  const query = document.getElementById('search-frere').value.toLowerCase().trim();
+  document.querySelectorAll('.frere-item').forEach(item => {
+    const visible = item.dataset.nom.toLowerCase().includes(query);
+    item.style.display = visible ? '' : 'none';
+  });
+}
+
+function selectFrere(nom, element) {
+  vibrate(15);
+  document.querySelectorAll('.frere-item').forEach(i => i.classList.remove('selected'));
+  element.classList.add('selected');
+  state.frere = nom;
+  document.getElementById('btn-valider-frere').disabled = false;
+}
+
+function validerFrere() {
+  if (!state.frere) return;
+  vibrate(20);
+  document.getElementById('subtitle-mois').innerHTML =
+    `Salut <strong>${state.frere}</strong> ! Choisis un mois à renseigner.`;
+  renderMonthsGrid();
+  show('screen-mois');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉCRAN 3 : Grille des mois
+// ═══════════════════════════════════════════════════════════════
+
+function renderMonthsGrid() {
+  const grid = document.getElementById('months-grid');
+  grid.innerHTML = '';
+  MOIS.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'month-card' + (state.moisRemplis.has(m.num) ? ' done' : '');
+    div.innerHTML = `<span class="emoji">${m.emoji}</span><span class="name">${m.nom}</span>`;
+    div.onclick = () => selectMois(m);
+    grid.appendChild(div);
+  });
+}
+
+function selectMois(mois) {
+  vibrate(20);
+  state.moisCourant = mois;
+  // Initialiser toutes les dates du mois en "dispo" si pas déjà fait
+  const dates = getDatesForMonth(mois.num);
+  dates.forEach(d => {
+    if (!state.dispos[d.iso]) {
+      state.dispos[d.iso] = { etat: 'dispo', nature: '' };
+    }
+  });
+  renderDatesScreen(mois, dates);
+  show('screen-dates');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉCRAN 4 : Saisie des dates
+// ═══════════════════════════════════════════════════════════════
+
+function renderDatesScreen(mois, dates) {
+  document.getElementById('dates-title').textContent = `${mois.emoji} ${mois.nom} 2026`;
+  document.getElementById('dates-subtitle').textContent = `${dates.length} date(s) — mardis & samedis`;
+  const container = document.getElementById('dates-container');
+  container.innerHTML = '';
+
+  dates.forEach((d, i) => {
+    const row = document.createElement('div');
+    row.className = 'date-row';
+    row.style.animationDelay = `${i * 30}ms`;
+    const current = state.dispos[d.iso];
+
+    row.innerHTML = `
+      <div class="date-label">
+        ${d.labelFull} <span class="time">• ${d.heure}</span>
+      </div>
+      <div class="toggle-group" data-iso="${d.iso}">
+        <button class="toggle-btn ${current.etat==='dispo'?'active':''}" data-state="dispo" onclick="setState('${d.iso}','dispo')">
+          <span class="icon">🟢</span><span>Dispo</span>
+        </button>
+        <button class="toggle-btn ${current.etat==='indispo'?'active':''}" data-state="indispo" onclick="setState('${d.iso}','indispo')">
+          <span class="icon">🔴</span><span>Indispo</span>
+        </button>
+        <button class="toggle-btn ${current.etat==='particip'?'active':''}" data-state="particip" onclick="setState('${d.iso}','particip')">
+          <span class="icon">🟠</span><span>Particip.</span>
+        </button>
+      </div>
+      <div class="particip-input" id="particip-${d.iso}" style="display:${current.etat==='particip'?'block':'none'}">
+        <input type="text" placeholder="Nature de la participation..."
+               value="${current.nature||''}"
+               oninput="setNature('${d.iso}', this.value)">
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function setState(iso, etat) {
+  vibrate(15);
+  state.dispos[iso].etat = etat;
+  if (etat !== 'particip') state.dispos[iso].nature = '';
+
+  // Mise à jour visuelle du groupe
+  const group = document.querySelector(`.toggle-group[data-iso="${iso}"]`);
+  group.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.state === etat);
+  });
+
+  // Affichage/masquage du champ participation
+  const particip = document.getElementById(`particip-${iso}`);
+  particip.style.display = etat === 'particip' ? 'block' : 'none';
+  if (etat === 'particip') {
+    const input = particip.querySelector('input');
+    setTimeout(() => input.focus(), 100);
+  }
+}
+
+function setNature(iso, value) {
+  state.dispos[iso].nature = value;
+}
+
+function validerMois() {
+  vibrate(25);
+  state.moisRemplis.add(state.moisCourant.num);
+  renderRecap();
+  show('screen-recap');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉCRAN 5 : Récap
+// ═══════════════════════════════════════════════════════════════
+
+function renderRecap() {
+  const container = document.getElementById('recap-container');
+  container.innerHTML = '';
+
+  // On n'affiche que le mois qu'il vient de remplir (saisie d'un mois à la fois)
+  const m = state.moisCourant;
+  const dates = getDatesForMonth(m.num);
+  let nbDispo = 0, nbIndispo = 0, nbParticip = 0;
+  dates.forEach(d => {
+    const e = state.dispos[d.iso].etat;
+    if (e === 'dispo') nbDispo++;
+    else if (e === 'indispo') nbIndispo++;
+    else if (e === 'particip') nbParticip++;
+  });
+
+  const card = document.createElement('div');
+  card.className = 'recap-month';
+  card.innerHTML = `
+    <div class="recap-month-title">${m.emoji} ${m.nom} 2026</div>
+    <div class="recap-stats">
+      <span class="recap-stat dispo">🟢 ${nbDispo} dispo</span>
+      ${nbIndispo>0?`<span class="recap-stat indispo">🔴 ${nbIndispo} indispo</span>`:''}
+      ${nbParticip>0?`<span class="recap-stat particip">🟠 ${nbParticip} particip.</span>`:''}
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENVOI AU GAS
+// ═══════════════════════════════════════════════════════════════
+
+async function envoyer() {
+  const btn = document.getElementById('btn-envoyer');
+  const label = document.getElementById('btn-envoyer-label');
+  const errorDiv = document.getElementById('error-msg');
+  errorDiv.innerHTML = '';
+
+  btn.disabled = true;
+  label.innerHTML = '<span class="loader"></span> Envoi en cours...';
+  vibrate(30);
+
+  // Construire le payload : uniquement le mois courant
+  const m = state.moisCourant;
+  const dates = getDatesForMonth(m.num);
+  const payload = {
+    action: 'saveDispos',
+    nom: state.frere,
+    mois: m.num,
+    moisNom: m.nom,
+    timestamp: new Date().toISOString(),
+    dispos: dates.map(d => ({
+      iso: d.iso,
+      label: d.labelFull,
+      dow: d.dow,
+      etat: state.dispos[d.iso].etat,
+      nature: state.dispos[d.iso].nature || ''
+    }))
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erreur inconnue');
+
+    // SUCCÈS
+    vibrate([30, 50, 30]);
+    launchConfetti();
+    show('screen-success');
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    label.textContent = '📤 Envoyer mes dispos';
+    errorDiv.innerHTML = `<div class="error-msg">❌ L'envoi a échoué : ${err.message}<br>Vérifie ta connexion et réessaie.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REDÉMARRAGE
+// ═══════════════════════════════════════════════════════════════
+
+function restart() {
+  vibrate(15);
+  // On garde le frère, on réinitialise le mois courant
+  state.moisCourant = null;
+  // On ne vide PAS state.dispos : l'utilisateur peut passer à un autre mois
+  renderMonthsGrid();
+  show('screen-mois');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFETTIS 🎉
+// ═══════════════════════════════════════════════════════════════
+
+function launchConfetti() {
+  const colors = ['#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#ec4899', '#14b8a6'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDuration = (2 + Math.random() * 2) + 's';
+      c.style.width = (6 + Math.random() * 8) + 'px';
+      c.style.height = c.style.width;
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 4000);
+    }, i * 25);
+  }
+}
+</script>
+</body>
+</html>
