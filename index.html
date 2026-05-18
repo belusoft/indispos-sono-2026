@@ -7,11 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Mes Indispos — Sono & Accueil 2026</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
     * {
       box-sizing: border-box;
@@ -19,32 +17,26 @@
       padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
-
     html, body {
       height: 100%;
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #1f2937;
     }
-
     body {
       min-height: 100vh;
       padding: 20px;
     }
-
     #app {
       max-width: 480px;
       margin: 0 auto;
     }
-
     .screen {
       display: none;
     }
-
     .screen.active {
       display: block;
     }
-
     .card {
       background: white;
       border-radius: 24px;
@@ -52,38 +44,31 @@
       box-shadow: 0 10px 40px rgba(0, 0, 0, .15);
       margin-bottom: 20px;
     }
-
     .brand-header {
       text-align: center;
       margin-bottom: 20px;
       color: white;
     }
-
     .brand-header .emoji {
       font-size: 56px;
     }
-
     .brand-header h1 {
       font-size: 24px;
       font-weight: 700;
     }
-
     .brand-header p {
       font-size: 13px;
       opacity: .9;
     }
-
     h2 {
       font-size: 22px;
       margin-bottom: 8px;
     }
-
     .subtitle {
       color: #6b7280;
       line-height: 1.5;
       margin-bottom: 20px;
     }
-
     .btn {
       width: 100%;
       border: none;
@@ -95,41 +80,33 @@
       margin-top: 12px;
       transition: opacity 0.2s, transform 0.1s;
     }
-
     .btn:focus-visible {
       outline: 3px solid #4f46e5;
       outline-offset: 2px;
     }
-
     .btn:active {
       transform: scale(0.98);
     }
-
     .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-
     .btn-primary {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white;
     }
-
     .btn-success {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
     }
-
     .btn-secondary {
       background: #f3f4f6;
       color: #1f2937;
     }
-
     .btn-danger {
       background: #ef4444;
       color: white;
     }
-
     .search-input,
     input[type="text"] {
       width: 100%;
@@ -140,13 +117,11 @@
       font-size: 16px;
       font-family: inherit;
     }
-
     .search-input:focus-visible,
     input[type="text"]:focus-visible {
       outline: 3px solid #6366f1;
       outline-offset: 2px;
     }
-
     .freres-list {
       max-height: 50vh;
       overflow-y: auto;
@@ -154,7 +129,6 @@
       border-radius: 14px;
       margin-bottom: 16px;
     }
-
     .frere-item {
       display: block;
       width: 100%;
@@ -168,29 +142,24 @@
       cursor: pointer;
       color: #1f2937;
     }
-
     .frere-item:focus-visible {
       outline: 3px solid #6366f1;
       outline-offset: -3px;
     }
-
     .frere-item:hover {
       background: #f9fafb;
     }
-
     .frere-item.selected {
       background: #ede9fe;
       color: #6366f1;
       font-weight: 600;
     }
-
     .months-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-bottom: 16px;
     }
-
     .month-card {
       background: white;
       border-radius: 18px;
@@ -202,34 +171,28 @@
       font-family: inherit;
       transition: border-color 0.2s;
     }
-
     .month-card:focus-visible {
       outline: 3px solid #6366f1;
       outline-offset: 2px;
     }
-
     .month-card.done {
       border-color: #10b981;
     }
-
     .date-row {
       background: white;
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 10px;
     }
-
     .date-label {
       font-weight: 600;
       margin-bottom: 10px;
     }
-
     .toggle-group {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
     }
-
     .toggle-btn {
       border: none;
       border-radius: 12px;
@@ -240,31 +203,25 @@
       background: #f3f4f6;
       transition: background 0.2s;
     }
-
     .toggle-btn:focus-visible {
       outline: 3px solid #6366f1;
       outline-offset: 2px;
     }
-
     .toggle-btn.active[data-state="dispo"] {
       background: #10b981;
       color: white;
     }
-
     .toggle-btn.active[data-state="indispo"] {
       background: #ef4444;
       color: white;
     }
-
     .toggle-btn.active[data-state="particip"] {
       background: #f59e0b;
       color: white;
     }
-
     .particip-input {
       margin-top: 10px;
     }
-
     .particip-input input {
       width: 100%;
       padding: 10px;
@@ -272,7 +229,6 @@
       border: 2px solid #e5e7eb;
       font-family: inherit;
     }
-
     .recap-month {
       background: white;
       border-radius: 14px;
@@ -280,12 +236,10 @@
       margin-bottom: 12px;
       border: 1px solid #e5e7eb;
     }
-
     .recap-month strong {
       display: block;
       margin-bottom: 4px;
     }
-
     .error-msg {
       background: #fef2f2;
       color: #991b1b;
@@ -293,16 +247,13 @@
       border-radius: 12px;
       margin-top: 12px;
     }
-
     .success-screen {
       text-align: center;
       padding: 40px 20px;
     }
-
     .big-emoji {
       font-size: 72px;
     }
-
     .loader {
       width: 18px;
       height: 18px;
@@ -312,35 +263,27 @@
       animation: spin .8s linear infinite;
       display: inline-block;
     }
-
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-
     .nav-buttons {
       display: flex;
       gap: 10px;
     }
-
     .nav-buttons .btn {
       flex: 1;
     }
-
     .text-small {
       font-size: 13px;
       color: #6b7280;
     }
-
     .warning {
       color: #b45309;
     }
   </style>
 </head>
-
 <body>
-
 <div id="app">
-
   <!-- ACCUEIL -->
   <div class="screen active" id="screen-welcome">
     <div class="brand-header">
@@ -348,7 +291,6 @@
       <h1>Mes Indispos</h1>
       <p>Sono & Accueil — 2026</p>
     </div>
-
     <div class="card">
       <h2>Salut mon frère 👋</h2>
       <p class="subtitle">Renseigne tes indisponibilités pour les réunions.</p>
@@ -356,7 +298,6 @@
       <button class="btn btn-secondary" id="btn-reset-local" style="margin-top:8px;">🗑️ Effacer mes données locales</button>
     </div>
   </div>
-
   <!-- CHOIX FRERE -->
   <div class="screen" id="screen-frere">
     <div class="card">
@@ -367,7 +308,6 @@
       <button class="btn btn-secondary" id="btn-back-welcome">← Retour</button>
     </div>
   </div>
-
   <!-- CHOIX MOIS -->
   <div class="screen" id="screen-mois">
     <div class="card">
@@ -379,7 +319,6 @@
       </div>
     </div>
   </div>
-
   <!-- DATES -->
   <div class="screen" id="screen-dates">
     <div class="card">
@@ -390,7 +329,6 @@
       <button class="btn btn-secondary" id="btn-back-mois">← Retour aux mois</button>
     </div>
   </div>
-
   <!-- RECAP -->
   <div class="screen" id="screen-recap">
     <div class="card">
@@ -404,7 +342,6 @@
       <button class="btn btn-secondary" id="btn-reset-all" style="margin-top:8px;">🗑️ Tout effacer et recommencer</button>
     </div>
   </div>
-
   <!-- SUCCESS -->
   <div class="screen" id="screen-success">
     <div class="card success-screen">
@@ -416,15 +353,12 @@
     </div>
   </div>
 </div>
-
 <script>
 'use strict';
-
 // ======================================================
 // CONFIGURATION
 // ======================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgGFKTALtOfCKQU1kXzdy03-ObIiM3JLk79dZV3WF66U2h6_2_iYh2SLLcOAtSxzhd/exec';
-
 const FRERES = ['Alex A.', 'Luc B.', 'Maïley B.', 'Yanis M.'];
 const MOIS = [
   { num: 5, nom: 'Mai', emoji: '🌸' },
@@ -432,18 +366,15 @@ const MOIS = [
   { num: 7, nom: 'Juillet', emoji: '🌞' },
   { num: 8, nom: 'Août', emoji: '🏖️' }
 ];
-
 // ======================================================
 // ÉTAT DE L'APPLICATION (avec persistance locale)
 // ======================================================
 const STORAGE_KEY = 'mes-indispos-state';
-
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Convertir le Set sauvegardé en tableau puis recréer un Set
       return {
         frere: parsed.frere || null,
         moisCourant: parsed.moisCourant || null,
@@ -456,9 +387,7 @@ function loadState() {
   }
   return { frere: null, moisCourant: null, dispos: {}, moisRemplis: new Set() };
 }
-
 const state = loadState();
-
 function saveState() {
   const toSave = {
     frere: state.frere,
@@ -468,7 +397,6 @@ function saveState() {
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
 }
-
 function clearState() {
   state.frere = null;
   state.moisCourant = null;
@@ -476,7 +404,6 @@ function clearState() {
   state.moisRemplis.clear();
   localStorage.removeItem(STORAGE_KEY);
 }
-
 // ======================================================
 // UTILITAIRES
 // ======================================================
@@ -485,12 +412,10 @@ function show(id) {
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
 }
-
 function getDatesForMonth(monthNum) {
   const dates = [];
   const year = 2026;
   const lastDay = new Date(year, monthNum, 0).getDate();
-
   for (let d = 1; d <= lastDay; d++) {
     const date = new Date(year, monthNum - 1, d);
     const dow = date.getDay();
@@ -503,33 +428,26 @@ function getDatesForMonth(monthNum) {
   }
   return dates;
 }
-
-// Échappement basique pour éviter XSS dans les valeurs affichées
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
-
 // ======================================================
 // GESTION DES ÉCRANS
 // ======================================================
-
 // --- ACCUEIL ---
 document.getElementById('btn-start').addEventListener('click', () => {
   renderFreres();
   show('screen-frere');
 });
-
 document.getElementById('btn-reset-local').addEventListener('click', () => {
   if (confirm('Effacer toutes les données locales ? Cette action est irréversible.')) {
     clearState();
     alert('Données effacées. Tu peux recommencer.');
-    // Retour à l'accueil
     show('screen-welcome');
   }
 });
-
 // --- CHOIX FRERE ---
 function renderFreres() {
   const container = document.getElementById('freres-list');
@@ -544,23 +462,18 @@ function renderFreres() {
     btn.addEventListener('click', () => selectFrere(nom, btn));
     container.appendChild(btn);
   });
-
-  // Restaurer la sélection si déjà faite
   if (state.frere) {
     const selectedBtn = Array.from(container.children).find(b => b.dataset.nom === state.frere);
     if (selectedBtn) selectFrere(state.frere, selectedBtn);
   }
 }
-
 function filterFreres() {
   const q = document.getElementById('search-frere').value.toLowerCase();
   document.querySelectorAll('#freres-list .frere-item').forEach(item => {
     item.style.display = item.dataset.nom.toLowerCase().includes(q) ? '' : 'none';
   });
 }
-
 document.getElementById('search-frere').addEventListener('input', filterFreres);
-
 function selectFrere(nom, el) {
   document.querySelectorAll('#freres-list .frere-item').forEach(i => {
     i.classList.remove('selected');
@@ -572,24 +485,20 @@ function selectFrere(nom, el) {
   saveState();
   document.getElementById('btn-valider-frere').disabled = false;
 }
-
 document.getElementById('btn-valider-frere').addEventListener('click', () => {
   if (!state.frere) return;
   renderMonths();
   show('screen-mois');
 });
-
 document.getElementById('btn-back-welcome').addEventListener('click', () => {
   show('screen-welcome');
 });
-
 // --- CHOIX MOIS ---
 function renderMonths() {
   const grid = document.getElementById('months-grid');
   grid.innerHTML = '';
   const hasAnyMonth = state.moisRemplis.size > 0;
   document.getElementById('btn-goto-recap').disabled = !hasAnyMonth;
-
   MOIS.forEach(m => {
     const btn = document.createElement('button');
     btn.className = 'month-card';
@@ -600,21 +509,17 @@ function renderMonths() {
     grid.appendChild(btn);
   });
 }
-
 document.getElementById('btn-goto-recap').addEventListener('click', () => {
   renderRecap();
   show('screen-recap');
 });
-
 document.getElementById('btn-back-frere').addEventListener('click', () => {
   renderFreres();
   show('screen-frere');
 });
-
 function selectMois(m) {
   state.moisCourant = m;
   const dates = getDatesForMonth(m.num);
-  // Initialiser les dates si pas encore présentes
   dates.forEach(d => {
     if (!state.dispos[d.iso]) {
       state.dispos[d.iso] = { etat: 'dispo', nature: '' };
@@ -624,33 +529,27 @@ function selectMois(m) {
   renderDates(dates);
   show('screen-dates');
 }
-
 // --- DATES ---
 function renderDates(dates) {
   document.getElementById('dates-title').textContent = `${state.moisCourant.emoji} ${state.moisCourant.nom}`;
   const container = document.getElementById('dates-container');
   container.innerHTML = '';
   document.getElementById('dates-error').style.display = 'none';
-
   dates.forEach(d => {
     const current = state.dispos[d.iso];
     const row = document.createElement('div');
     row.className = 'date-row';
-
     const label = document.createElement('div');
     label.className = 'date-label';
     label.textContent = d.label;
     row.appendChild(label);
-
     const toggleGroup = document.createElement('div');
     toggleGroup.className = 'toggle-group';
-
     const states = [
       { value: 'dispo', label: '🟢 Dispo' },
       { value: 'indispo', label: '🔴 Indispo' },
       { value: 'particip', label: '🟠 Particip.' }
     ];
-
     states.forEach(s => {
       const btn = document.createElement('button');
       btn.className = 'toggle-btn';
@@ -661,27 +560,21 @@ function renderDates(dates) {
       btn.addEventListener('click', () => setState(d.iso, s.value));
       toggleGroup.appendChild(btn);
     });
-
     row.appendChild(toggleGroup);
-
-    // Champ nature (affiché si particip)
     const participDiv = document.createElement('div');
     participDiv.className = 'particip-input';
     participDiv.id = `particip-${d.iso}`;
     participDiv.style.display = current.etat === 'particip' ? 'block' : 'none';
-
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = 'Nature participation...';
     input.value = current.nature;
     input.addEventListener('input', (e) => setNature(d.iso, e.target.value));
     participDiv.appendChild(input);
-
     row.appendChild(participDiv);
     container.appendChild(row);
   });
 }
-
 function setState(iso, etat) {
   state.dispos[iso].etat = etat;
   if (etat !== 'particip') {
@@ -690,14 +583,11 @@ function setState(iso, etat) {
   saveState();
   renderDates(getDatesForMonth(state.moisCourant.num));
 }
-
 function setNature(iso, val) {
   state.dispos[iso].nature = val;
   saveState();
 }
-
 document.getElementById('btn-valider-mois').addEventListener('click', () => {
-  // Validation : s'assurer que les participations ont une nature renseignée
   const dates = getDatesForMonth(state.moisCourant.num);
   const missingNature = dates.filter(d => state.dispos[d.iso].etat === 'particip' && !state.dispos[d.iso].nature.trim());
   if (missingNature.length > 0) {
@@ -711,12 +601,10 @@ document.getElementById('btn-valider-mois').addEventListener('click', () => {
   renderMonths();
   show('screen-mois');
 });
-
 document.getElementById('btn-back-mois').addEventListener('click', () => {
   renderMonths();
   show('screen-mois');
 });
-
 // --- RECAP ---
 function renderRecap() {
   const container = document.getElementById('recap-container');
@@ -725,7 +613,6 @@ function renderRecap() {
     container.innerHTML = '<p class="text-small">Aucun mois renseigné pour le moment.</p>';
     return;
   }
-
   const sortedMonths = Array.from(state.moisRemplis).sort((a, b) => a - b);
   sortedMonths.forEach(num => {
     const m = MOIS.find(m => m.num === num);
@@ -746,75 +633,87 @@ function renderRecap() {
     container.appendChild(div);
   });
 }
-
 document.getElementById('btn-back-mois-from-recap').addEventListener('click', () => {
   renderMonths();
   show('screen-mois');
 });
-
 document.getElementById('btn-reset-all').addEventListener('click', () => {
   if (confirm('Effacer toutes les disponibilités et recommencer ?')) {
     clearState();
     show('screen-welcome');
   }
 });
-
 // --- ENVOI ---
+// Le GAS traite UN seul mois par appel POST.
+// On boucle donc côté client : 1 fetch par mois rempli.
+// Chaque payload inclut "moisNom" (requis par le GAS) et "mois" (entier).
+// La réponse du GAS contient {ok:true,...} et non {success:true,...}.
 document.getElementById('btn-envoyer').addEventListener('click', envoyer);
-
 async function envoyer() {
   const btn = document.getElementById('btn-envoyer');
   const label = document.getElementById('btn-envoyer-label');
   const errorDiv = document.getElementById('error-msg');
   errorDiv.innerHTML = '';
   btn.disabled = true;
-  label.innerHTML = '<span class="loader"></span> Envoi...';
 
-  // Construire le payload pour tous les mois remplis
-  const allDispos = [];
   const moisRemplisSorted = Array.from(state.moisRemplis).sort((a, b) => a - b);
-  moisRemplisSorted.forEach(num => {
-    const dates = getDatesForMonth(num);
-    dates.forEach(d => {
-      allDispos.push({
+
+  if (moisRemplisSorted.length === 0) {
+    btn.disabled = false;
+    errorDiv.innerHTML = `<div class="error-msg">❌ Aucun mois à envoyer.</div>`;
+    return;
+  }
+
+  const resultats = [];
+
+  try {
+    for (let i = 0; i < moisRemplisSorted.length; i++) {
+      const num = moisRemplisSorted[i];
+      const moisInfo = MOIS.find(m => m.num === num);
+
+      label.innerHTML = `<span class="loader"></span> Envoi ${i + 1}/${moisRemplisSorted.length} (${moisInfo.nom})...`;
+
+      const dates = getDatesForMonth(num);
+      const disposMois = dates.map(d => ({
         iso: d.iso,
         label: d.label,
         etat: state.dispos[d.iso]?.etat || 'dispo',
         nature: state.dispos[d.iso]?.nature || ''
+      }));
+
+      const payload = {
+        action: 'saveDispos',
+        nom: state.frere,
+        mois: num,                 // entier attendu par le GAS
+        moisNom: moisInfo.nom,     // "Mai", "Juin", "Juillet", "Août"
+        timestamp: new Date().toISOString(),
+        dispos: disposMois
+      };
+
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
       });
-    });
-  });
 
-  const payload = {
-    action: 'saveDispos',
-    nom: state.frere,
-    mois: moisRemplisSorted.join(','), // on envoie les numéros de mois
-    timestamp: new Date().toISOString(),
-    dispos: allDispos
-  };
+      if (!res.ok) {
+        throw new Error(`${moisInfo.nom} : erreur serveur (${res.status})`);
+      }
 
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-      body: JSON.stringify(payload),
-      redirect: 'follow'
-    });
+      const rawText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseError) {
+        throw new Error(`${moisInfo.nom} : réponse du serveur incompréhensible`);
+      }
 
-    if (!res.ok) {
-      throw new Error(`Erreur serveur (${res.status})`);
-    }
+      if (!data.ok) {
+        throw new Error(`${moisInfo.nom} : ${data.error || 'erreur inconnue'}`);
+      }
 
-    const rawText = await res.text();
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch (parseError) {
-      throw new Error('Réponse du serveur incompréhensible');
-    }
-
-    if (!data.success) {
-      throw new Error(data.error || 'Erreur inconnue');
+      resultats.push(data);
     }
 
     show('screen-success');
@@ -825,28 +724,22 @@ async function envoyer() {
     errorDiv.innerHTML = `<div class="error-msg">❌ ${escapeHtml(err.message)}</div>`;
   }
 }
-
 // --- SUCCESS ---
 document.getElementById('btn-new-session').addEventListener('click', () => {
-  // Garder le frère mais vider les mois remplis pour recommencer
   state.moisRemplis.clear();
   state.dispos = {};
   saveState();
   renderMonths();
   show('screen-mois');
 });
-
 document.getElementById('btn-reset-after-success').addEventListener('click', () => {
   clearState();
   show('screen-welcome');
 });
-
 // ======================================================
 // INITIALISATION
 // ======================================================
-// Restaurer l'écran si on a déjà un frère sélectionné et des mois remplis
 if (state.frere && state.moisRemplis.size > 0) {
-  // On pourrait aller directement au récap ou au choix des mois
   renderMonths();
   show('screen-mois');
 } else if (state.frere) {
@@ -856,6 +749,5 @@ if (state.frere && state.moisRemplis.size > 0) {
   show('screen-welcome');
 }
 </script>
-
 </body>
 </html>
