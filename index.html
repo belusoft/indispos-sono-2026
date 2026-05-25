@@ -6,502 +6,219 @@
   <meta name="theme-color" content="#6366f1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Mes Indispos — Sono & Accueil 2026</title>
+  <title>Mes Indispos — Sono &amp; Accueil 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html, body {
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #1f2937;
-    }
-    body {
-      min-height: 100vh;
-      padding: 20px;
-    }
-    #app {
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .screen {
-      display: none;
-    }
-    .screen.active {
-      display: block;
-    }
-    .card {
-      background: white;
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, .15);
-      margin-bottom: 20px;
-    }
-    .brand-header {
-      text-align: center;
-      margin-bottom: 20px;
-      color: white;
-    }
-    .brand-header .emoji {
-      font-size: 56px;
-    }
-    .brand-header h1 {
-      font-size: 24px;
-      font-weight: 700;
-    }
-    .brand-header p {
-      font-size: 13px;
-      opacity: .9;
-    }
-    h2 {
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-    .subtitle {
-      color: #6b7280;
-      line-height: 1.5;
-      margin-bottom: 20px;
-    }
-    .btn {
-      width: 100%;
-      border: none;
-      border-radius: 16px;
-      padding: 16px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 12px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn:focus-visible {
-      outline: 3px solid #4f46e5;
-      outline-offset: 2px;
-    }
-    .btn:active {
-      transform: scale(0.98);
-    }
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-    }
-    .btn-success {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-    }
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #1f2937;
-    }
-    .btn-danger {
-      background: #ef4444;
-      color: white;
-    }
-    .search-input,
-    input[type="text"] {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 2px solid #e5e7eb;
-      margin-bottom: 16px;
-      font-size: 16px;
-      font-family: inherit;
-    }
-    .search-input:focus-visible,
-    input[type="text"]:focus-visible {
-      outline: 3px solid #6366f1;
-      outline-offset: 2px;
-    }
-    .freres-list {
-      max-height: 50vh;
-      overflow-y: auto;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      margin-bottom: 16px;
-    }
-    .frere-item {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-bottom: 1px solid #f3f4f6;
-      background: white;
-      text-align: left;
-      font-size: 16px;
-      font-family: inherit;
-      cursor: pointer;
-      color: #1f2937;
-    }
-    .frere-item:focus-visible {
-      outline: 3px solid #6366f1;
-      outline-offset: -3px;
-    }
-    .frere-item:hover {
-      background: #f9fafb;
-    }
-    .frere-item.selected {
-      background: #ede9fe;
-      color: #6366f1;
-      font-weight: 600;
-    }
-    .months-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .month-card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      border: 2px solid transparent;
-      font-size: 16px;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-    .month-card:focus-visible {
-      outline: 3px solid #6366f1;
-      outline-offset: 2px;
-    }
-    .month-card.done {
-      border-color: #10b981;
-    }
-    .date-row {
-      background: white;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 10px;
-    }
-    .date-label {
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-    .toggle-group {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-    }
-    .toggle-btn {
-      border: none;
-      border-radius: 12px;
-      padding: 10px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      background: #f3f4f6;
-      transition: background 0.2s;
-    }
-    .toggle-btn:focus-visible {
-      outline: 3px solid #6366f1;
-      outline-offset: 2px;
-    }
-    .toggle-btn.active[data-state="dispo"] {
-      background: #10b981;
-      color: white;
-    }
-    .toggle-btn.active[data-state="indispo"] {
-      background: #ef4444;
-      color: white;
-    }
-    .toggle-btn.active[data-state="particip"] {
-      background: #f59e0b;
-      color: white;
-    }
-    .particip-input {
-      margin-top: 10px;
-    }
-    .particip-input input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      border: 2px solid #e5e7eb;
-      font-family: inherit;
-    }
-    .recap-month {
-      background: white;
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 12px;
-      border: 1px solid #e5e7eb;
-    }
-    .recap-month strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-    .error-msg {
-      background: #fef2f2;
-      color: #991b1b;
-      padding: 12px;
-      border-radius: 12px;
-      margin-top: 12px;
-    }
-    .success-screen {
-      text-align: center;
-      padding: 40px 20px;
-    }
-    .big-emoji {
-      font-size: 72px;
-    }
-    .loader {
-      width: 18px;
-      height: 18px;
-      border: 3px solid rgba(255, 255, 255, .3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .nav-buttons {
-      display: flex;
-      gap: 10px;
-    }
-    .nav-buttons .btn {
-      flex: 1;
-    }
-    .text-small {
-      font-size: 13px;
-      color: #6b7280;
-    }
-    .warning {
-      color: #b45309;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #1f2937; }
+    body { min-height: 100vh; padding: 20px; }
+    #app { max-width: 480px; margin: 0 auto; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card { background: white; border-radius: 24px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,.15); margin-bottom: 20px; }
+    .brand-header { text-align: center; margin-bottom: 20px; color: white; }
+    .brand-header .emoji { font-size: 56px; }
+    .brand-header h1 { font-size: 24px; font-weight: 700; }
+    .brand-header p { font-size: 13px; opacity: .9; }
+    h2 { font-size: 22px; margin-bottom: 8px; }
+    .subtitle { color: #6b7280; line-height: 1.5; margin-bottom: 20px; }
+    .btn { width: 100%; border: none; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; transition: opacity 0.2s, transform 0.1s; }
+    .btn:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .btn-secondary { background: #f3f4f6; color: #1f2937; }
+    .btn-danger { background: #ef4444; color: white; }
+    .search-input, input[type="text"] { width: 100%; padding: 14px; border-radius: 14px; border: 2px solid #e5e7eb; margin-bottom: 16px; font-size: 16px; font-family: inherit; }
+    .search-input:focus-visible, input[type="text"]:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+    .freres-list { max-height: 50vh; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 14px; margin-bottom: 16px; }
+    .frere-item { display: block; width: 100%; padding: 14px; border: none; border-bottom: 1px solid #f3f4f6; background: white; text-align: left; font-size: 16px; font-family: inherit; cursor: pointer; color: #1f2937; }
+    .frere-item:focus-visible { outline: 3px solid #6366f1; outline-offset: -3px; }
+    .frere-item:hover { background: #f9fafb; }
+    .frere-item.selected { background: #ede9fe; color: #6366f1; font-weight: 600; }
+    .months-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+    .month-card { background: white; border-radius: 18px; padding: 20px; text-align: center; cursor: pointer; border: 2px solid transparent; font-size: 16px; font-family: inherit; transition: border-color 0.2s; }
+    .month-card:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+    .month-card.done { border-color: #10b981; }
+    .date-row { background: white; border-radius: 16px; padding: 16px; margin-bottom: 10px; }
+    .date-label { font-weight: 600; margin-bottom: 10px; }
+    .toggle-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .toggle-btn { border: none; border-radius: 12px; padding: 10px; cursor: pointer; font-size: 12px; font-weight: 600; background: #f3f4f6; transition: background 0.2s; }
+    .toggle-btn:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+    .toggle-btn.active[data-state="dispo"]    { background: #10b981; color: white; }
+    .toggle-btn.active[data-state="indispo"]  { background: #ef4444; color: white; }
+    .toggle-btn.active[data-state="particip"] { background: #f59e0b; color: white; }
+    .particip-input { margin-top: 10px; }
+    .particip-input input { width: 100%; padding: 10px; border-radius: 10px; border: 2px solid #e5e7eb; font-family: inherit; }
+    .recap-month { background: white; border-radius: 14px; padding: 14px; margin-bottom: 12px; border: 1px solid #e5e7eb; }
+    .recap-month strong { display: block; margin-bottom: 4px; }
+    .error-msg { background: #fef2f2; color: #991b1b; padding: 12px; border-radius: 12px; margin-top: 12px; }
+    .success-screen { text-align: center; padding: 40px 20px; }
+    .big-emoji { font-size: 72px; }
+    .loader { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .nav-buttons { display: flex; gap: 10px; }
+    .nav-buttons .btn { flex: 1; }
+    .text-small { font-size: 13px; color: #6b7280; }
+    .warning { color: #b45309; }
+    .loading-freres { text-align: center; color: #6b7280; padding: 24px 16px; font-size: 15px; }
+    .loading-freres .loader-purple { width: 22px; height: 22px; border: 3px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    .error-freres { text-align: center; color: #991b1b; background: #fef2f2; border-radius: 12px; padding: 16px; font-size: 14px; line-height: 1.6; }
   </style>
 </head>
 <body>
 <div id="app">
-  <!-- ACCUEIL -->
   <div class="screen active" id="screen-welcome">
     <div class="brand-header">
-      <div class="emoji">🎵</div>
+      <div class="emoji">&#127925;</div>
       <h1>Mes Indispos</h1>
-      <p>Sono & Accueil — 2026</p>
+      <p>Sono &amp; Accueil — 2026</p>
     </div>
     <div class="card">
-      <h2>Salut mon frère 👋</h2>
-      <p class="subtitle">Renseigne tes indisponibilités pour les réunions.</p>
-      <button class="btn btn-primary" id="btn-start">Commencer ✨</button>
-      <button class="btn btn-secondary" id="btn-reset-local" style="margin-top:8px;">🗑️ Effacer mes données locales</button>
+      <h2>Salut mon fr&#232;re &#128075;</h2>
+      <p class="subtitle">Renseigne tes indisponibilit&#233;s pour les r&#233;unions.</p>
+      <button class="btn btn-primary" id="btn-start">Commencer &#10024;</button>
+      <button class="btn btn-secondary" id="btn-reset-local" style="margin-top:8px;">&#128465;&#65039; Effacer mes donn&#233;es locales</button>
     </div>
   </div>
-  <!-- CHOIX FRERE -->
   <div class="screen" id="screen-frere">
     <div class="card">
       <h2>Qui es-tu ?</h2>
       <input type="text" class="search-input" id="search-frere" placeholder="Recherche..." autocomplete="off">
-      <div class="freres-list" id="freres-list" role="listbox" aria-label="Liste des frères"></div>
-      <button class="btn btn-primary" id="btn-valider-frere" disabled>Suivant →</button>
-      <button class="btn btn-secondary" id="btn-back-welcome">← Retour</button>
+      <div class="freres-list" id="freres-list" role="listbox" aria-label="Liste des fr&#232;res"></div>
+      <button class="btn btn-primary" id="btn-valider-frere" disabled>Suivant &#8594;</button>
+      <button class="btn btn-secondary" id="btn-back-welcome">&#8592; Retour</button>
     </div>
   </div>
-  <!-- CHOIX MOIS -->
   <div class="screen" id="screen-mois">
     <div class="card">
-      <h2>Choisis un mois 📅</h2>
+      <h2>Choisis un mois &#128197;</h2>
       <div class="months-grid" id="months-grid"></div>
       <div class="nav-buttons">
-        <button class="btn btn-secondary" id="btn-back-frere">← Changer de frère</button>
-        <button class="btn btn-primary" id="btn-goto-recap" disabled>📋 Voir le récapitulatif</button>
+        <button class="btn btn-secondary" id="btn-back-frere">&#8592; Changer de fr&#232;re</button>
+        <button class="btn btn-primary" id="btn-goto-recap" disabled>&#128203; Voir le r&#233;capitulatif</button>
       </div>
     </div>
   </div>
-  <!-- DATES -->
   <div class="screen" id="screen-dates">
     <div class="card">
       <h2 id="dates-title"></h2>
       <div id="dates-container"></div>
       <div id="dates-error" class="error-msg" style="display:none;"></div>
-      <button class="btn btn-primary" id="btn-valider-mois">Valider ce mois ✓</button>
-      <button class="btn btn-secondary" id="btn-back-mois">← Retour aux mois</button>
+      <button class="btn btn-primary" id="btn-valider-mois">Valider ce mois &#10003;</button>
+      <button class="btn btn-secondary" id="btn-back-mois">&#8592; Retour aux mois</button>
     </div>
   </div>
-  <!-- RECAP -->
   <div class="screen" id="screen-recap">
     <div class="card">
-      <h2>Récapitulatif 🚀</h2>
+      <h2>R&#233;capitulatif &#128640;</h2>
       <div id="recap-container"></div>
       <button class="btn btn-success" id="btn-envoyer">
-        <span id="btn-envoyer-label">📤 Envoyer mes dispos</span>
+        <span id="btn-envoyer-label">&#128228; Envoyer mes dispos</span>
       </button>
       <div id="error-msg"></div>
-      <button class="btn btn-secondary" id="btn-back-mois-from-recap">← Retour aux mois</button>
-      <button class="btn btn-secondary" id="btn-reset-all" style="margin-top:8px;">🗑️ Tout effacer et recommencer</button>
+      <button class="btn btn-secondary" id="btn-back-mois-from-recap">&#8592; Retour aux mois</button>
+      <button class="btn btn-secondary" id="btn-reset-all" style="margin-top:8px;">&#128465;&#65039; Tout effacer et recommencer</button>
     </div>
   </div>
-  <!-- SUCCESS -->
   <div class="screen" id="screen-success">
     <div class="card success-screen">
-      <div class="big-emoji">🎉</div>
-      <h2>Merci frère !</h2>
-      <p>Tes disponibilités ont bien été enregistrées.</p>
-      <button class="btn btn-primary" id="btn-new-session">✨ Renseigner un autre mois</button>
-      <button class="btn btn-secondary" id="btn-reset-after-success">🗑️ Effacer mes données</button>
+      <div class="big-emoji">&#127881;</div>
+      <h2>Merci fr&#232;re !</h2>
+      <p>Tes disponibilit&#233;s ont bien &#233;t&#233; enregistr&#233;es.</p>
+      <button class="btn btn-primary" id="btn-new-session">&#10024; Renseigner un autre mois</button>
+      <button class="btn btn-secondary" id="btn-reset-after-success">&#128465;&#65039; Effacer mes donn&#233;es</button>
     </div>
   </div>
 </div>
 <script>
 'use strict';
-// ======================================================
-// CONFIGURATION
-// ======================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgGFKTALtOfCKQU1kXzdy03-ObIiM3JLk79dZV3WF66U2h6_2_iYh2SLLcOAtSxzhd/exec';
-const FRERES = [
-  'Alex A.',
-  'Antoni P.',
-  'Axandre A.',
-  'Axel Z.',
-  'Aymeric G.',
-  'Boris M.',
-  'Bruce M.',
-  'Cedrick S.',
-  'Claude M.',
-  'Credo G.',
-  'Didier M.',
-  'Fabrice S.',
-  'Frédérique R.',
-  'Jean G.',
-  'Jean Philippe L.',
-  'Jean-Michel D.',
-  'Joël D.',
-  'Joël P.',
-  'Junior M.',
-  'Luc B.',
-  'Maïley B.',
-  'Marc H.',
-  'Marc P.',
-  'Marius B.',
-  'Mathieu M.',
-  'Maxime M.',
-  'Raphaël R.',
-  'Robert I.',
-  'Sammy L.',
-  'Samuel G.',
-  'Steeven G.',
-  'Stivy M.',
-  'Terreblanche M.',
-  'Thierry L.',
-  'Thierry V.',
-  'Tommy N.',
-  'Yanis M.',
-  'Yannick D.'
-];
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby-QGAs4SFO132VVDtS5Okj0XZmlhBxjEzyLVki6aSOegziAmqbMvOxmhekwRCQ55xy/exec';
+let FRERES = [];
 const MOIS = [
-  { num: 5,  nom: 'Mai',       emoji: '🌸' },
-  { num: 6,  nom: 'Juin',      emoji: '☀️' },
-  { num: 7,  nom: 'Juillet',   emoji: '🌞' },
-  { num: 8,  nom: 'Août',      emoji: '🏖️' },
-  { num: 9,  nom: 'Septembre', emoji: '🍂' },
-  { num: 10, nom: 'Octobre',   emoji: '🎃' },
-  { num: 11, nom: 'Novembre',  emoji: '🍁' },
-  { num: 12, nom: 'Décembre',  emoji: '🎄' }
+  { num: 5,  nom: 'Mai',       emoji: '\uD83C\uDF38' },
+  { num: 6,  nom: 'Juin',      emoji: '\u2600\uFE0F' },
+  { num: 7,  nom: 'Juillet',   emoji: '\uD83C\uDF1E' },
+  { num: 8,  nom: 'Ao\u00FBt', emoji: '\uD83C\uDFD6\uFE0F' },
+  { num: 9,  nom: 'Septembre', emoji: '\uD83C\uDF42' },
+  { num: 10, nom: 'Octobre',   emoji: '\uD83C\uDF83' },
+  { num: 11, nom: 'Novembre',  emoji: '\uD83C\uDF41' },
+  { num: 12, nom: 'D\u00E9cembre', emoji: '\uD83C\uDF84' }
 ];
-// ======================================================
-// ÉTAT DE L'APPLICATION (avec persistance locale)
-// ======================================================
 const STORAGE_KEY = 'mes-indispos-state';
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      return {
-        frere: parsed.frere || null,
-        moisCourant: parsed.moisCourant || null,
-        dispos: parsed.dispos || {},
-        moisRemplis: new Set(parsed.moisRemplis || [])
-      };
+      return { frere: parsed.frere || null, moisCourant: parsed.moisCourant || null, dispos: parsed.dispos || {}, moisRemplis: new Set(parsed.moisRemplis || []) };
     }
-  } catch (e) {
-    console.warn('Impossible de restaurer les données locales', e);
-  }
+  } catch (e) { console.warn('Impossible de restaurer les donn\u00E9es locales', e); }
   return { frere: null, moisCourant: null, dispos: {}, moisRemplis: new Set() };
 }
 const state = loadState();
 function saveState() {
-  const toSave = {
-    frere: state.frere,
-    moisCourant: state.moisCourant,
-    dispos: state.dispos,
-    moisRemplis: Array.from(state.moisRemplis)
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ frere: state.frere, moisCourant: state.moisCourant, dispos: state.dispos, moisRemplis: Array.from(state.moisRemplis) }));
 }
 function clearState() {
-  state.frere = null;
-  state.moisCourant = null;
-  state.dispos = {};
-  state.moisRemplis.clear();
+  state.frere = null; state.moisCourant = null; state.dispos = {}; state.moisRemplis.clear();
   localStorage.removeItem(STORAGE_KEY);
 }
-// ======================================================
-// UTILITAIRES
-// ======================================================
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
 }
 function getDatesForMonth(monthNum) {
-  const dates = [];
-  const year = 2026;
+  const dates = []; const year = 2026;
   const lastDay = new Date(year, monthNum, 0).getDate();
   for (let d = 1; d <= lastDay; d++) {
-    const date = new Date(year, monthNum - 1, d);
-    const dow = date.getDay();
+    const date = new Date(year, monthNum - 1, d); const dow = date.getDay();
     if (dow === 2 || dow === 6) {
-      dates.push({
-        iso: `${year}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-        label: date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-      });
+      dates.push({ iso: `${year}-${String(monthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`, label: date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) });
     }
   }
   return dates;
 }
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-// ======================================================
-// GESTION DES ÉCRANS
-// ======================================================
+function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+
 // --- ACCUEIL ---
-document.getElementById('btn-start').addEventListener('click', () => {
-  renderFreres();
-  show('screen-frere');
-});
+document.getElementById('btn-start').addEventListener('click', () => { show('screen-frere'); loadFreres(); });
 document.getElementById('btn-reset-local').addEventListener('click', () => {
-  if (confirm('Effacer toutes les données locales ? Cette action est irréversible.')) {
-    clearState();
-    alert('Données effacées. Tu peux recommencer.');
-    show('screen-welcome');
-  }
+  if (confirm('Effacer toutes les donn\u00E9es locales ? Cette action est irr\u00E9versible.')) { clearState(); alert('Donn\u00E9es effac\u00E9es. Tu peux recommencer.'); show('screen-welcome'); }
 });
-// --- CHOIX FRERE ---
+
+// --- CHARGEMENT DYNAMIQUE DE LA LISTE ---
+async function loadFreres() {
+  const container = document.getElementById('freres-list');
+  const btnValider = document.getElementById('btn-valider-frere');
+  document.getElementById('search-frere').value = '';
+  btnValider.disabled = true;
+  container.innerHTML = '<div class="loading-freres"><span class="loader-purple"></span> Chargement de la liste...</div>';
+  try {
+    const res = await fetch(GAS_URL + '?action=getFreres');
+    if (!res.ok) throw new Error('Erreur r\u00E9seau (' + res.status + ')');
+    const data = await res.json();
+    if (!data.ok || !Array.isArray(data.freres)) throw new Error(data.error || 'R\u00E9ponse inattendue du serveur');
+    FRERES = data.freres;
+    renderFreres();
+  } catch (err) {
+    console.error('loadFreres :', err);
+    container.innerHTML = '<div class="error-freres">\u274C Impossible de charger la liste des fr\u00E8res.<br><small>' + escapeHtml(err.message) + '</small><br><br><button onclick="loadFreres()" style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:14px;">\uD83D\uDD04 R\u00E9essayer</button></div>';
+  }
+}
+
+// --- AFFICHAGE DE LA LISTE ---
 function renderFreres() {
   const container = document.getElementById('freres-list');
   container.innerHTML = '';
   FRERES.forEach(nom => {
     const btn = document.createElement('button');
-    btn.className = 'frere-item';
-    btn.textContent = nom;
-    btn.setAttribute('role', 'option');
-    btn.setAttribute('aria-selected', 'false');
-    btn.dataset.nom = nom;
+    btn.className = 'frere-item'; btn.textContent = nom;
+    btn.setAttribute('role', 'option'); btn.setAttribute('aria-selected', 'false'); btn.dataset.nom = nom;
     btn.addEventListener('click', () => selectFrere(nom, btn));
     container.appendChild(btn);
   });
@@ -512,285 +229,126 @@ function renderFreres() {
 }
 function filterFreres() {
   const q = document.getElementById('search-frere').value.toLowerCase();
-  document.querySelectorAll('#freres-list .frere-item').forEach(item => {
-    item.style.display = item.dataset.nom.toLowerCase().includes(q) ? '' : 'none';
-  });
+  document.querySelectorAll('#freres-list .frere-item').forEach(item => { item.style.display = item.dataset.nom.toLowerCase().includes(q) ? '' : 'none'; });
 }
 document.getElementById('search-frere').addEventListener('input', filterFreres);
+
 function selectFrere(nom, el) {
-  document.querySelectorAll('#freres-list .frere-item').forEach(i => {
-    i.classList.remove('selected');
-    i.setAttribute('aria-selected', 'false');
-  });
-  el.classList.add('selected');
-  el.setAttribute('aria-selected', 'true');
-  state.frere = nom;
-  saveState();
+  document.querySelectorAll('#freres-list .frere-item').forEach(i => { i.classList.remove('selected'); i.setAttribute('aria-selected', 'false'); });
+  el.classList.add('selected'); el.setAttribute('aria-selected', 'true');
+  state.frere = nom; saveState();
   document.getElementById('btn-valider-frere').disabled = false;
 }
-document.getElementById('btn-valider-frere').addEventListener('click', () => {
-  if (!state.frere) return;
-  renderMonths();
-  show('screen-mois');
-});
-document.getElementById('btn-back-welcome').addEventListener('click', () => {
-  show('screen-welcome');
-});
+document.getElementById('btn-valider-frere').addEventListener('click', () => { if (!state.frere) return; renderMonths(); show('screen-mois'); });
+document.getElementById('btn-back-welcome').addEventListener('click', () => { show('screen-welcome'); });
+
 // --- CHOIX MOIS ---
 function renderMonths() {
-  const grid = document.getElementById('months-grid');
-  grid.innerHTML = '';
-  const hasAnyMonth = state.moisRemplis.size > 0;
-  document.getElementById('btn-goto-recap').disabled = !hasAnyMonth;
+  const grid = document.getElementById('months-grid'); grid.innerHTML = '';
+  document.getElementById('btn-goto-recap').disabled = !(state.moisRemplis.size > 0);
   MOIS.forEach(m => {
-    const btn = document.createElement('button');
-    btn.className = 'month-card';
+    const btn = document.createElement('button'); btn.className = 'month-card';
     if (state.moisRemplis.has(m.num)) btn.classList.add('done');
     btn.innerHTML = `<div style="font-size:32px">${m.emoji}</div><div>${m.nom}</div>`;
     btn.setAttribute('aria-label', `Mois de ${m.nom}`);
-    btn.addEventListener('click', () => selectMois(m));
-    grid.appendChild(btn);
+    btn.addEventListener('click', () => selectMois(m)); grid.appendChild(btn);
   });
 }
-document.getElementById('btn-goto-recap').addEventListener('click', () => {
-  renderRecap();
-  show('screen-recap');
-});
-document.getElementById('btn-back-frere').addEventListener('click', () => {
-  renderFreres();
-  show('screen-frere');
-});
+document.getElementById('btn-goto-recap').addEventListener('click', () => { renderRecap(); show('screen-recap'); });
+document.getElementById('btn-back-frere').addEventListener('click', () => { show('screen-frere'); loadFreres(); });
 function selectMois(m) {
   state.moisCourant = m;
-  const dates = getDatesForMonth(m.num);
-  dates.forEach(d => {
-    if (!state.dispos[d.iso]) {
-      state.dispos[d.iso] = { etat: 'dispo', nature: '' };
-    }
-  });
-  saveState();
-  renderDates(dates);
-  show('screen-dates');
+  getDatesForMonth(m.num).forEach(d => { if (!state.dispos[d.iso]) state.dispos[d.iso] = { etat: 'dispo', nature: '' }; });
+  saveState(); renderDates(getDatesForMonth(m.num)); show('screen-dates');
 }
+
 // --- DATES ---
 function renderDates(dates) {
   document.getElementById('dates-title').textContent = `${state.moisCourant.emoji} ${state.moisCourant.nom}`;
-  const container = document.getElementById('dates-container');
-  container.innerHTML = '';
+  const container = document.getElementById('dates-container'); container.innerHTML = '';
   document.getElementById('dates-error').style.display = 'none';
   dates.forEach(d => {
     const current = state.dispos[d.iso];
-    const row = document.createElement('div');
-    row.className = 'date-row';
-    const label = document.createElement('div');
-    label.className = 'date-label';
-    label.textContent = d.label;
-    row.appendChild(label);
-    const toggleGroup = document.createElement('div');
-    toggleGroup.className = 'toggle-group';
-    const states = [
-      { value: 'dispo', label: '🟢 Dispo' },
-      { value: 'indispo', label: '🔴 Indispo' },
-      { value: 'particip', label: '🟠 Particip.' }
-    ];
-    states.forEach(s => {
-      const btn = document.createElement('button');
-      btn.className = 'toggle-btn';
+    const row = document.createElement('div'); row.className = 'date-row';
+    const lbl = document.createElement('div'); lbl.className = 'date-label'; lbl.textContent = d.label; row.appendChild(lbl);
+    const tg = document.createElement('div'); tg.className = 'toggle-group';
+    [{ value:'dispo', label:'\uD83D\uDFE2 Dispo' }, { value:'indispo', label:'\uD83D\uDD34 Indispo' }, { value:'particip', label:'\uD83D\uDFE0 Particip.' }].forEach(s => {
+      const btn = document.createElement('button'); btn.className = 'toggle-btn';
       if (current.etat === s.value) btn.classList.add('active');
-      btn.dataset.state = s.value;
-      btn.textContent = s.label;
+      btn.dataset.state = s.value; btn.textContent = s.label;
       btn.setAttribute('aria-pressed', current.etat === s.value ? 'true' : 'false');
-      btn.addEventListener('click', () => setState(d.iso, s.value));
-      toggleGroup.appendChild(btn);
+      btn.addEventListener('click', () => setState(d.iso, s.value)); tg.appendChild(btn);
     });
-    row.appendChild(toggleGroup);
-    const participDiv = document.createElement('div');
-    participDiv.className = 'particip-input';
-    participDiv.id = `particip-${d.iso}`;
-    participDiv.style.display = current.etat === 'particip' ? 'block' : 'none';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'Nature participation...';
-    input.value = current.nature;
-    input.addEventListener('input', (e) => setNature(d.iso, e.target.value));
-    participDiv.appendChild(input);
-    row.appendChild(participDiv);
+    row.appendChild(tg);
+    const pd = document.createElement('div'); pd.className = 'particip-input'; pd.id = `particip-${d.iso}`; pd.style.display = current.etat === 'particip' ? 'block' : 'none';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = 'Nature participation...'; inp.value = current.nature;
+    inp.addEventListener('input', (e) => setNature(d.iso, e.target.value)); pd.appendChild(inp); row.appendChild(pd);
     container.appendChild(row);
   });
 }
-function setState(iso, etat) {
-  state.dispos[iso].etat = etat;
-  if (etat !== 'particip') {
-    state.dispos[iso].nature = '';
-  }
-  saveState();
-  renderDates(getDatesForMonth(state.moisCourant.num));
-}
-function setNature(iso, val) {
-  state.dispos[iso].nature = val;
-  saveState();
-}
+function setState(iso, etat) { state.dispos[iso].etat = etat; if (etat !== 'particip') state.dispos[iso].nature = ''; saveState(); renderDates(getDatesForMonth(state.moisCourant.num)); }
+function setNature(iso, val) { state.dispos[iso].nature = val; saveState(); }
 document.getElementById('btn-valider-mois').addEventListener('click', () => {
   const dates = getDatesForMonth(state.moisCourant.num);
-  const missingNature = dates.filter(d => state.dispos[d.iso].etat === 'particip' && !state.dispos[d.iso].nature.trim());
-  if (missingNature.length > 0) {
-    const errorDiv = document.getElementById('dates-error');
-    errorDiv.textContent = `Merci de préciser la nature de participation pour : ${missingNature.map(d => d.label).join(', ')}.`;
-    errorDiv.style.display = 'block';
-    return;
-  }
-  state.moisRemplis.add(state.moisCourant.num);
-  saveState();
-  renderMonths();
-  show('screen-mois');
+  const missing = dates.filter(d => state.dispos[d.iso].etat === 'particip' && !state.dispos[d.iso].nature.trim());
+  if (missing.length > 0) { const e = document.getElementById('dates-error'); e.textContent = `Merci de pr\u00E9ciser la nature de participation pour : ${missing.map(d => d.label).join(', ')}.`; e.style.display = 'block'; return; }
+  state.moisRemplis.add(state.moisCourant.num); saveState(); renderMonths(); show('screen-mois');
 });
-document.getElementById('btn-back-mois').addEventListener('click', () => {
-  renderMonths();
-  show('screen-mois');
-});
+document.getElementById('btn-back-mois').addEventListener('click', () => { renderMonths(); show('screen-mois'); });
+
 // --- RECAP ---
 function renderRecap() {
-  const container = document.getElementById('recap-container');
-  container.innerHTML = '';
-  if (!state.frere || state.moisRemplis.size === 0) {
-    container.innerHTML = '<p class="text-small">Aucun mois renseigné pour le moment.</p>';
-    return;
-  }
-  const sortedMonths = Array.from(state.moisRemplis).sort((a, b) => a - b);
-  sortedMonths.forEach(num => {
-    const m = MOIS.find(m => m.num === num);
-    const dates = getDatesForMonth(num);
-    const div = document.createElement('div');
-    div.className = 'recap-month';
+  const container = document.getElementById('recap-container'); container.innerHTML = '';
+  if (!state.frere || state.moisRemplis.size === 0) { container.innerHTML = '<p class="text-small">Aucun mois renseign\u00E9 pour le moment.</p>'; return; }
+  Array.from(state.moisRemplis).sort((a,b)=>a-b).forEach(num => {
+    const m = MOIS.find(m=>m.num===num); const dates = getDatesForMonth(num);
+    const div = document.createElement('div'); div.className = 'recap-month';
     let details = '';
     dates.forEach(d => {
-      const etat = state.dispos[d.iso]?.etat || 'dispo';
-      const nature = state.dispos[d.iso]?.nature || '';
-      let badge = '';
-      if (etat === 'dispo') badge = '🟢';
-      else if (etat === 'indispo') badge = '🔴';
-      else if (etat === 'particip') badge = '🟠';
-      details += `<div>${badge} ${d.label}${nature ? ' — ' + escapeHtml(nature) : ''}</div>`;
+      const etat = state.dispos[d.iso]?.etat || 'dispo'; const nature = state.dispos[d.iso]?.nature || '';
+      const badge = etat==='dispo' ? '\uD83D\uDFE2' : etat==='indispo' ? '\uD83D\uDD34' : '\uD83D\uDFE0';
+      details += `<div>${badge} ${d.label}${nature ? ' \u2014 ' + escapeHtml(nature) : ''}</div>`;
     });
-    div.innerHTML = `<strong>${escapeHtml(state.frere)} — ${m.emoji} ${m.nom} 2026</strong>${details}`;
+    div.innerHTML = `<strong>${escapeHtml(state.frere)} \u2014 ${m.emoji} ${m.nom} 2026</strong>${details}`;
     container.appendChild(div);
   });
 }
-document.getElementById('btn-back-mois-from-recap').addEventListener('click', () => {
-  renderMonths();
-  show('screen-mois');
-});
-document.getElementById('btn-reset-all').addEventListener('click', () => {
-  if (confirm('Effacer toutes les disponibilités et recommencer ?')) {
-    clearState();
-    show('screen-welcome');
-  }
-});
+document.getElementById('btn-back-mois-from-recap').addEventListener('click', () => { renderMonths(); show('screen-mois'); });
+document.getElementById('btn-reset-all').addEventListener('click', () => { if (confirm('Effacer toutes les disponibilit\u00E9s et recommencer ?')) { clearState(); show('screen-welcome'); } });
+
 // --- ENVOI ---
-// Le GAS traite UN seul mois par appel POST.
-// On boucle donc côté client : 1 fetch par mois rempli.
-// Chaque payload inclut "moisNom" (requis par le GAS) et "mois" (entier).
-// La réponse du GAS contient {ok:true,...} et non {success:true,...}.
 document.getElementById('btn-envoyer').addEventListener('click', envoyer);
 async function envoyer() {
-  const btn = document.getElementById('btn-envoyer');
-  const label = document.getElementById('btn-envoyer-label');
-  const errorDiv = document.getElementById('error-msg');
-  errorDiv.innerHTML = '';
-  btn.disabled = true;
-
-  const moisRemplisSorted = Array.from(state.moisRemplis).sort((a, b) => a - b);
-
-  if (moisRemplisSorted.length === 0) {
-    btn.disabled = false;
-    errorDiv.innerHTML = `<div class="error-msg">❌ Aucun mois à envoyer.</div>`;
-    return;
-  }
-
-  const resultats = [];
-
+  const btn = document.getElementById('btn-envoyer'); const label = document.getElementById('btn-envoyer-label'); const errorDiv = document.getElementById('error-msg');
+  errorDiv.innerHTML = ''; btn.disabled = true;
+  const sorted = Array.from(state.moisRemplis).sort((a,b)=>a-b);
+  if (sorted.length === 0) { btn.disabled = false; errorDiv.innerHTML = '<div class="error-msg">\u274C Aucun mois \u00E0 envoyer.</div>'; return; }
   try {
-    for (let i = 0; i < moisRemplisSorted.length; i++) {
-      const num = moisRemplisSorted[i];
-      const moisInfo = MOIS.find(m => m.num === num);
-
-      label.innerHTML = `<span class="loader"></span> Envoi ${i + 1}/${moisRemplisSorted.length} (${moisInfo.nom})...`;
-
+    for (let i = 0; i < sorted.length; i++) {
+      const num = sorted[i]; const moisInfo = MOIS.find(m=>m.num===num);
+      label.innerHTML = `<span class="loader"></span> Envoi ${i+1}/${sorted.length} (${moisInfo.nom})...`;
       const dates = getDatesForMonth(num);
-      const disposMois = dates.map(d => ({
-        iso: d.iso,
-        label: d.label,
-        etat: state.dispos[d.iso]?.etat || 'dispo',
-        nature: state.dispos[d.iso]?.nature || ''
-      }));
-
-      const payload = {
-        action: 'saveDispos',
-        nom: state.frere,
-        mois: num,                 // entier attendu par le GAS
-        moisNom: moisInfo.nom,     // "Mai", "Juin", "Juillet", "Août"
-        timestamp: new Date().toISOString(),
-        dispos: disposMois
-      };
-
-      const res = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify(payload),
-        redirect: 'follow'
-      });
-
-      if (!res.ok) {
-        throw new Error(`${moisInfo.nom} : erreur serveur (${res.status})`);
-      }
-
-      const rawText = await res.text();
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch (parseError) {
-        throw new Error(`${moisInfo.nom} : réponse du serveur incompréhensible`);
-      }
-
-      if (!data.ok) {
-        throw new Error(`${moisInfo.nom} : ${data.error || 'erreur inconnue'}`);
-      }
-
-      resultats.push(data);
+      const disposMois = dates.map(d => ({ iso: d.iso, label: d.label, etat: state.dispos[d.iso]?.etat || 'dispo', nature: state.dispos[d.iso]?.nature || '' }));
+      const payload = { action: 'saveDispos', nom: state.frere, mois: num, moisNom: moisInfo.nom, timestamp: new Date().toISOString(), dispos: disposMois };
+      const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(payload), redirect: 'follow' });
+      if (!res.ok) throw new Error(`${moisInfo.nom} : erreur serveur (${res.status})`);
+      const rawText = await res.text(); let data;
+      try { data = JSON.parse(rawText); } catch(_) { throw new Error(`${moisInfo.nom} : r\u00E9ponse du serveur incompr\u00E9hensible`); }
+      if (!data.ok) throw new Error(`${moisInfo.nom} : ${data.error || 'erreur inconnue'}`);
     }
-
     show('screen-success');
   } catch (err) {
-    console.error(err);
-    btn.disabled = false;
-    label.innerHTML = '📤 Envoyer mes dispos';
-    errorDiv.innerHTML = `<div class="error-msg">❌ ${escapeHtml(err.message)}</div>`;
+    console.error(err); btn.disabled = false; label.innerHTML = '\uD83D\uDCE4 Envoyer mes dispos';
+    errorDiv.innerHTML = `<div class="error-msg">\u274C ${escapeHtml(err.message)}</div>`;
   }
 }
+
 // --- SUCCESS ---
-document.getElementById('btn-new-session').addEventListener('click', () => {
-  state.moisRemplis.clear();
-  state.dispos = {};
-  saveState();
-  renderMonths();
-  show('screen-mois');
-});
-document.getElementById('btn-reset-after-success').addEventListener('click', () => {
-  clearState();
-  show('screen-welcome');
-});
-// ======================================================
-// INITIALISATION
-// ======================================================
-if (state.frere && state.moisRemplis.size > 0) {
-  renderMonths();
-  show('screen-mois');
-} else if (state.frere) {
-  renderMonths();
-  show('screen-mois');
-} else {
-  show('screen-welcome');
-}
+document.getElementById('btn-new-session').addEventListener('click', () => { state.moisRemplis.clear(); state.dispos = {}; saveState(); renderMonths(); show('screen-mois'); });
+document.getElementById('btn-reset-after-success').addEventListener('click', () => { clearState(); show('screen-welcome'); });
+
+// --- INITIALISATION ---
+if (state.frere) { renderMonths(); show('screen-mois'); } else { show('screen-welcome'); }
 </script>
 </body>
 </html>
