@@ -267,8 +267,7 @@
   let token = localStorage.getItem('mi_admin_token') || null;
   let roles = [];
   let membres = [];
-  let moisActuel = 5;
-  let moisActuelSuivi = 5;
+  let moisActuel = 5; // mois partagé entre les onglets Suivi et Programme
 
   const $ = (id) => document.getElementById(id);
 
@@ -367,11 +366,31 @@
       bloc.style.borderBottom = '1px solid #eee';
       bloc.style.padding = '10px 0';
 
-      const titre = document.createElement('div');
+      const ligneTitre = document.createElement('div');
+      ligneTitre.style.display = 'flex';
+      ligneTitre.style.justifyContent = 'space-between';
+      ligneTitre.style.alignItems = 'center';
+      ligneTitre.style.marginBottom = '6px';
+
+      const titre = document.createElement('span');
       titre.style.fontWeight = '600';
-      titre.style.marginBottom = '6px';
       titre.textContent = m.nom;
-      bloc.appendChild(titre);
+      ligneTitre.appendChild(titre);
+
+      const btnReponses = document.createElement('button');
+      btnReponses.className = 'secondaire';
+      btnReponses.style.fontSize = '0.78rem';
+      btnReponses.style.padding = '4px 10px';
+      btnReponses.textContent = '👁️ Réponses';
+      btnReponses.addEventListener('click', () => basculerPanelReponses(m.id, panelReponses));
+      ligneTitre.appendChild(btnReponses);
+
+      bloc.appendChild(ligneTitre);
+
+      const panelReponses = document.createElement('div');
+      panelReponses.className = 'cache';
+      panelReponses.style.marginBottom = '10px';
+      bloc.appendChild(panelReponses);
 
       const chips = document.createElement('div');
       chips.className = 'roles-chips';
@@ -402,6 +421,95 @@
     });
   }
 
+  async function rafraichirPanelReponses(frereId, panel) {
+    panel.innerHTML = '<p class="resume">Chargement…</p>';
+    try {
+      const data = await appel('/api/admin/frere-reponses?frereId=' + frereId);
+      renderPanelReponses(panel, frereId, data);
+    } catch (err) {
+      panel.innerHTML = '<p class="erreur">' + err.message + '</p>';
+    }
+  }
+
+  function basculerPanelReponses(frereId, panel) {
+    const dejaOuvert = !panel.classList.contains('cache');
+    if (dejaOuvert) {
+      panel.classList.add('cache');
+      return;
+    }
+    panel.classList.remove('cache');
+    rafraichirPanelReponses(frereId, panel);
+  }
+
+  function renderPanelReponses(panel, frereId, data) {
+    panel.innerHTML = '';
+    panel.style.background = '#f9fafb';
+    panel.style.border = '1px solid #e5e7eb';
+    panel.style.borderRadius = '10px';
+    panel.style.padding = '10px';
+
+    if (data.reponses.length === 0) {
+      const vide = document.createElement('p');
+      vide.className = 'resume';
+      vide.textContent = 'Aucune disponibilité saisie pour le moment.';
+      panel.appendChild(vide);
+      return;
+    }
+
+    const tableau = document.createElement('table');
+    data.reponses.forEach((r) => {
+      const tr = document.createElement('tr');
+      const etatTxt = ETAT_LABEL[r.etat] + (r.nature ? ' — ' + r.nature : '');
+      tr.innerHTML =
+        '<td>' + capitalise(r.libelle) + '</td>' +
+        '<td>' + etatTxt + '</td>' +
+        '<td style="width: 36px;"></td>';
+      const btnSupprLigne = document.createElement('button');
+      btnSupprLigne.className = 'danger';
+      btnSupprLigne.style.fontSize = '0.75rem';
+      btnSupprLigne.style.padding = '3px 8px';
+      btnSupprLigne.textContent = '🗑️';
+      btnSupprLigne.title = 'Effacer cette réponse';
+      btnSupprLigne.addEventListener('click', async () => {
+        if (!confirm('Effacer la réponse de ' + data.nom + ' pour « ' + capitalise(r.libelle) + ' » ?')) return;
+        try {
+          await appel('/api/admin/frere-reponses', {
+            method: 'DELETE',
+            body: JSON.stringify({ frereId, reunionId: r.reunion_id })
+          });
+          await rafraichirPanelReponses(frereId, panel);
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      tr.lastElementChild.appendChild(btnSupprLigne);
+      tableau.appendChild(tr);
+    });
+    panel.appendChild(tableau);
+
+    const barre = document.createElement('div');
+    barre.style.marginTop = '8px';
+    const btnToutEffacer = document.createElement('button');
+    btnToutEffacer.className = 'danger';
+    btnToutEffacer.style.fontSize = '0.78rem';
+    btnToutEffacer.style.padding = '5px 10px';
+    btnToutEffacer.textContent = '🗑️ Effacer toutes ses réponses';
+    btnToutEffacer.addEventListener('click', async () => {
+      if (!confirm('Effacer TOUTES les réponses de ' + data.nom + ' (tous mois confondus) ? Irréversible.')) return;
+      try {
+        await appel('/api/admin/frere-reponses', {
+          method: 'DELETE',
+          body: JSON.stringify({ frereId })
+        });
+        panel.innerHTML = '<p class="resume">Toutes les réponses ont été effacées.</p>';
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    barre.appendChild(btnToutEffacer);
+    panel.appendChild(barre);
+  }
+
   function renderMoisSelect() {
     const conteneur = $('mois-select');
     conteneur.innerHTML = '';
@@ -420,8 +528,8 @@
     for (let m = 5; m <= 12; m++) {
       const btn = document.createElement('button');
       btn.textContent = MOIS_NOMS[m];
-      btn.className = m === moisActuelSuivi ? 'actif' : '';
-      btn.addEventListener('click', () => { moisActuelSuivi = m; chargerSuivi(); });
+      btn.className = m === moisActuel ? 'actif' : '';
+      btn.addEventListener('click', () => { moisActuel = m; chargerSuivi(); });
       conteneur.appendChild(btn);
     }
   }
@@ -429,7 +537,7 @@
   async function chargerSuivi() {
     renderMoisSelectSuivi();
     try {
-      const data = await appel('/api/admin/suivi?mois=' + moisActuelSuivi);
+      const data = await appel('/api/admin/suivi?mois=' + moisActuel);
       renderSuivi(data);
     } catch (err) {
       alert(err.message);
@@ -439,7 +547,7 @@
   function renderSuivi(data) {
     const total = data.repondus.length + data.nonRepondus.length;
     $('suivi-resume').textContent = data.repondus.length + ' / ' + total +
-      ' frères ont répondu pour ' + MOIS_NOMS[moisActuelSuivi] + '.';
+      ' frères ont répondu pour ' + MOIS_NOMS[moisActuel] + '.';
 
     const listeRepondus = $('liste-repondus');
     listeRepondus.innerHTML = '';
