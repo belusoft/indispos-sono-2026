@@ -139,6 +139,21 @@
   .export-doc td.role { font-weight: 600; width: 55%; }
   .export-doc td.vide { color: #b91c1c; font-style: italic; }
 
+  .tableau-suivi { border-collapse: collapse; white-space: nowrap; }
+  .tableau-suivi th, .tableau-suivi td {
+    padding: 6px 10px; font-size: 0.8rem; border: 1px solid #eee; text-align: center;
+  }
+  .tableau-suivi th.nom-frere, .tableau-suivi td.nom-frere {
+    text-align: left; position: sticky; left: 0; background: #fff; font-weight: 600; white-space: nowrap;
+  }
+  .tableau-suivi .badge-etat {
+    display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+  }
+  .badge-etat.dispo { background: #d1fae5; color: #047857; }
+  .badge-etat.indispo { background: #fee2e2; color: #b91c1c; }
+  .badge-etat.particip { background: #fef3c7; color: #92400e; }
+  .badge-etat.sans { background: #f1f5f9; color: #94a3b8; }
+
   .panel-danger {
     background: #fff7ed;
     border: 2px solid var(--orange);
@@ -198,16 +213,14 @@
       <h2>Suivi des réponses au sondage</h2>
       <div class="mois-select" id="mois-select-suivi"></div>
       <p class="resume" id="suivi-resume"></p>
-      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 220px;">
-          <h3 style="color: var(--vert); margin-bottom: 8px;">✅ Ont répondu</h3>
-          <ul id="liste-repondus" style="padding-left: 18px; margin: 0;"></ul>
-        </div>
-        <div style="flex: 1; min-width: 220px;">
-          <h3 style="color: var(--rouge); margin-bottom: 8px;">⏳ N'ont pas répondu</h3>
-          <ul id="liste-non-repondus" style="padding-left: 18px; margin: 0;"></ul>
-        </div>
+
+      <h3 style="color: var(--vert); margin: 10px 0 8px;">✅ Ont répondu — détail par date</h3>
+      <div style="overflow-x: auto;">
+        <table id="tableau-repondus" class="tableau-suivi"></table>
       </div>
+
+      <h3 style="color: var(--rouge); margin: 18px 0 8px;">⏳ N'ont pas répondu</h3>
+      <ul id="liste-non-repondus" style="padding-left: 18px; margin: 0;"></ul>
     </div>
 
     <!-- Programme -->
@@ -544,20 +557,35 @@
     }
   }
 
+  function badgeEtat(etat, nature) {
+    if (!etat) return '<span class="badge-etat sans">—</span>';
+    if (etat === 'dispo') return '<span class="badge-etat dispo">🟢 Dispo</span>';
+    if (etat === 'indispo') return '<span class="badge-etat indispo">🔴 Indispo</span>';
+    const texteNature = nature ? ' : ' + nature : '';
+    return '<span class="badge-etat particip">🟠 Particip' + texteNature + '</span>';
+  }
+
   function renderSuivi(data) {
     const total = data.repondus.length + data.nonRepondus.length;
     $('suivi-resume').textContent = data.repondus.length + ' / ' + total +
       ' frères ont répondu pour ' + MOIS_NOMS[moisActuel] + '.';
 
-    const listeRepondus = $('liste-repondus');
-    listeRepondus.innerHTML = '';
+    const tableau = $('tableau-repondus');
+    tableau.innerHTML = '';
+
     if (data.repondus.length === 0) {
-      listeRepondus.innerHTML = '<li style="color: var(--texte-clair);">Aucun pour le moment.</li>';
+      tableau.innerHTML = '<tr><td style="border:none; color: var(--texte-clair);">Aucune réponse pour le moment.</td></tr>';
     } else {
+      const theadTr = document.createElement('tr');
+      theadTr.innerHTML = '<th class="nom-frere">Frère</th>' +
+        data.reunions.map((r) => '<th>' + formatDateCourt(r.date) + '</th>').join('');
+      tableau.appendChild(theadTr);
+
       data.repondus.forEach((f) => {
-        const li = document.createElement('li');
-        li.textContent = f.nom;
-        listeRepondus.appendChild(li);
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td class="nom-frere">' + f.nom + '</td>' +
+          f.reponses.map((rep) => '<td>' + badgeEtat(rep.etat, rep.nature) + '</td>').join('');
+        tableau.appendChild(tr);
       });
     }
 
