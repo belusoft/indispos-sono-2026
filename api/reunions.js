@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
   try {
     const sql = neon(process.env.DATABASE_URL);
     const rows = await sql`
-      SELECT id, date_reunion, libelle
+      SELECT id, date_reunion::text AS date_reunion, libelle
       FROM reunions
       WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
       ORDER BY date_reunion ASC
