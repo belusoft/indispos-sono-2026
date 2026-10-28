@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administration — Sono &amp; Accueil 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --primaire: #6366f1;
@@ -96,6 +98,46 @@
   .barre-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .resume { font-size: 0.85rem; color: var(--texte-clair); margin-top: 8px; }
   .cache { display: none; }
+  .barre-publication { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .barre-publication select { width: auto; margin-bottom: 0; flex: 0 0 auto; min-width: 150px; }
+  .barre-publication label { font-size: 0.85rem; font-weight: 600; color: var(--texte-clair); }
+
+  /* Document exporté (impression / PDF / JPEG) */
+  .export-doc {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fff;
+    color: #111;
+    padding: 24px;
+    width: 760px;
+  }
+  .export-doc h1 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+    color: var(--primaire-fonce);
+  }
+  .export-doc .sous-titre {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0 0 20px;
+  }
+  .export-doc .bloc-reunion {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .export-doc .bloc-reunion h2 {
+    font-size: 1.05rem;
+    margin: 0 0 10px;
+    border-bottom: 2px solid var(--primaire);
+    padding-bottom: 6px;
+  }
+  .export-doc table { width: 100%; border-collapse: collapse; }
+  .export-doc td { padding: 6px 4px; font-size: 0.9rem; border-bottom: 1px solid #eee; }
+  .export-doc td.role { font-weight: 600; width: 55%; }
+  .export-doc td.vide { color: #b91c1c; font-style: italic; }
   .loader {
     display: inline-block; width: 16px; height: 16px;
     border: 2px solid #fff; border-top-color: transparent;
@@ -163,11 +205,31 @@
         <button id="btn-auto-tout" class="secondaire">Régénérer tout le mois</button>
       </div>
       <div id="auto-resultat" class="resume cache"></div>
+
+      <label style="font-size: 0.85rem; font-weight: 600; color: var(--texte-clair); display: block; margin-bottom: 6px;">
+        Publier le programme
+      </label>
+      <div class="barre-publication">
+        <select id="pub-scope">
+          <option value="mois">Mois complet</option>
+          <option value="semaine">Une semaine</option>
+          <option value="jour">Une date</option>
+        </select>
+        <select id="pub-date" class="cache"></select>
+        <button id="btn-imprimer" class="secondaire">🖨️ Imprimer</button>
+        <button id="btn-pdf" class="secondaire">📄 PDF</button>
+        <button id="btn-jpeg" class="secondaire">🖼️ JPEG</button>
+        <button id="btn-svg" class="secondaire">🔷 SVG</button>
+      </div>
+      <p class="resume">Pour « Une semaine », si celle-ci chevauche le mois suivant, seule la partie dans le mois affiché est incluse.</p>
+
       <div id="liste-reunions"></div>
     </div>
   </div>
 
 </div>
+
+<div id="zone-export" style="position: absolute; left: -9999px; top: 0;"></div>
 
 <script>
 (function () {
@@ -446,6 +508,8 @@
 
       conteneur.appendChild(bloc);
     });
+
+    remplirSelectDatePublication();
   }
 
   async function lancerAutoAssign(overwrite) {
@@ -472,6 +536,218 @@
     if (confirm('Régénérer tout le programme du mois écrasera les attributions manuelles existantes. Continuer ?')) {
       lancerAutoAssign(true);
     }
+  });
+
+  // ===== Publication (impression / PDF / JPEG / SVG) =====
+
+  const STYLE_EXPORT = `
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin:0; padding:0; color:#111; }
+    .export-doc { padding: 24px; width: 760px; }
+    .export-doc h1 { font-size: 1.4rem; margin: 0 0 4px; color: #4f46e5; }
+    .export-doc .sous-titre { font-size: 0.9rem; color: #555; margin: 0 0 20px; }
+    .export-doc .bloc-reunion { border: 1px solid #ccc; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; page-break-inside: avoid; }
+    .export-doc .bloc-reunion h2 { font-size: 1.05rem; margin: 0 0 10px; border-bottom: 2px solid #6366f1; padding-bottom: 6px; }
+    .export-doc table { width: 100%; border-collapse: collapse; }
+    .export-doc td { padding: 6px 4px; font-size: 0.9rem; border-bottom: 1px solid #eee; }
+    .export-doc td.role { font-weight: 600; width: 55%; }
+    .export-doc td.vide { color: #b91c1c; font-style: italic; }
+    @media print { body { padding: 0; } }
+  `;
+
+  function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function numeroSemaineISO(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + (1 - (d.getDay() || 7)));
+    const anneeDebut = new Date(d.getFullYear(), 0, 1);
+    const semaine = Math.ceil((((d - anneeDebut) / 86400000) + 1) / 7);
+    return d.getFullYear() + '-S' + semaine;
+  }
+
+  function formatDateCourt(iso) {
+    const [, m, j] = iso.split('-');
+    return j + '/' + m;
+  }
+
+  function remplirSelectDatePublication() {
+    const sel = $('pub-date');
+    sel.innerHTML = '';
+    programmeData.reunions.forEach((r) => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = capitalise(r.libelle);
+      sel.appendChild(opt);
+    });
+    sel.classList.toggle('cache', $('pub-scope').value === 'mois');
+  }
+
+  $('pub-scope').addEventListener('change', () => {
+    $('pub-date').classList.toggle('cache', $('pub-scope').value === 'mois');
+  });
+
+  function obtenirReunionsPublication() {
+    const scope = $('pub-scope').value;
+    if (scope === 'mois') return programmeData.reunions;
+
+    const idSel = parseInt($('pub-date').value, 10);
+    const ancre = programmeData.reunions.find((r) => r.id === idSel);
+    if (!ancre) return [];
+    if (scope === 'jour') return [ancre];
+
+    const semaineAncre = numeroSemaineISO(ancre.date);
+    return programmeData.reunions.filter((r) => numeroSemaineISO(r.date) === semaineAncre);
+  }
+
+  function construireTitrePublication(reunions, scope) {
+    if (scope === 'mois') return 'Programme — ' + MOIS_NOMS[moisActuel] + ' 2026';
+    if (scope === 'jour') return 'Programme — ' + capitalise((reunions[0] && reunions[0].libelle) || '');
+    if (reunions.length === 0) return 'Programme — semaine';
+    const dates = reunions.map((r) => r.date).sort();
+    return 'Programme — semaine du ' + formatDateCourt(dates[0]) + ' au ' + formatDateCourt(dates[dates.length - 1]);
+  }
+
+  function construireHTMLExport(reunions, titre) {
+    let html = '<div class="export-doc"><h1>' + titre + '</h1>' +
+      '<p class="sous-titre">Sono &amp; Accueil — généré le ' + new Date().toLocaleDateString('fr-FR') + '</p>';
+    reunions.forEach((r) => {
+      html += '<div class="bloc-reunion"><h2>' + capitalise(r.libelle) + '</h2><table>';
+      r.slots.forEach((s) => {
+        const nom = s.frereNom ? s.frereNom : '— Non attribué —';
+        html += '<tr><td class="role">' + s.roleNom + '</td><td' + (s.frereNom ? '' : ' class="vide"') + '>' + nom + '</td></tr>';
+      });
+      html += '</table></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function echapperXML(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function construireSVGExport(reunions, titre) {
+    const largeur = 760;
+    let y = 40;
+    const parties = [];
+    parties.push('<text x="20" y="' + y + '" font-size="22" font-family="system-ui, sans-serif" font-weight="700" fill="#4f46e5">' + echapperXML(titre) + '</text>');
+    y += 24;
+    parties.push('<text x="20" y="' + y + '" font-size="12" font-family="system-ui, sans-serif" fill="#555">Sono &amp; Accueil — généré le ' + new Date().toLocaleDateString('fr-FR') + '</text>');
+    y += 24;
+
+    reunions.forEach((r) => {
+      const hauteurBloc = 36 + r.slots.length * 22;
+      parties.push('<rect x="16" y="' + y + '" width="' + (largeur - 32) + '" height="' + hauteurBloc + '" rx="8" fill="#fff" stroke="#ccc"/>');
+      parties.push('<text x="28" y="' + (y + 24) + '" font-size="15" font-family="system-ui, sans-serif" font-weight="700" fill="#111">' + echapperXML(capitalise(r.libelle)) + '</text>');
+      parties.push('<line x1="28" y1="' + (y + 32) + '" x2="' + (largeur - 28) + '" y2="' + (y + 32) + '" stroke="#6366f1" stroke-width="2"/>');
+      let ligneY = y + 50;
+      r.slots.forEach((s) => {
+        const nom = s.frereNom ? s.frereNom : '— Non attribué —';
+        const couleur = s.frereNom ? '#111' : '#b91c1c';
+        parties.push('<text x="28" y="' + ligneY + '" font-size="12.5" font-family="system-ui, sans-serif" font-weight="600" fill="#111">' + echapperXML(s.roleNom) + '</text>');
+        parties.push('<text x="' + (largeur / 2) + '" y="' + ligneY + '" font-size="12.5" font-family="system-ui, sans-serif" fill="' + couleur + '">' + echapperXML(nom) + '</text>');
+        ligneY += 22;
+      });
+      y += hauteurBloc + 16;
+    });
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + largeur + '" height="' + (y + 16) + '" viewBox="0 0 ' + largeur + ' ' + (y + 16) + '">' +
+      '<rect width="100%" height="100%" fill="#f4f5fb"/>' + parties.join('') + '</svg>';
+  }
+
+  function nomFichier(titre, ext) {
+    const base = titre.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return base + '.' + ext;
+  }
+
+  function preparerExport() {
+    const reunions = obtenirReunionsPublication();
+    if (reunions.length === 0) {
+      alert('Aucune réunion à publier pour cette sélection.');
+      return null;
+    }
+    const titre = construireTitrePublication(reunions, $('pub-scope').value);
+    return { reunions, titre, html: construireHTMLExport(reunions, titre) };
+  }
+
+  $('btn-imprimer').addEventListener('click', () => {
+    const exp = preparerExport();
+    if (!exp) return;
+    const fenetre = window.open('', '_blank');
+    if (!fenetre) { alert('Le navigateur a bloqué la fenêtre d\'impression (pop-up).'); return; }
+    fenetre.document.write(
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>' + exp.titre +
+      '</title><style>' + STYLE_EXPORT + '</style></head><body>' + exp.html + '</body></html>'
+    );
+    fenetre.document.close();
+    setTimeout(() => { fenetre.focus(); fenetre.print(); }, 300);
+  });
+
+  $('btn-pdf').addEventListener('click', async () => {
+    const exp = preparerExport();
+    if (!exp) return;
+    const zone = $('zone-export');
+    zone.innerHTML = exp.html;
+    const btn = $('btn-pdf');
+    btn.disabled = true;
+    try {
+      const canvas = await html2canvas(zone, { scale: 2, backgroundColor: '#ffffff' });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let positionY = 0;
+      let pageIndex = 0;
+      while (positionY < imgHeight && pageIndex < 20) {
+        if (pageIndex > 0) pdf.addPage();
+        pdf.addImage(canvas, 'PNG', 0, -positionY, imgWidth, imgHeight);
+        positionY += pageHeight;
+        pageIndex += 1;
+      }
+      pdf.save(nomFichier(exp.titre, 'pdf'));
+    } catch (err) {
+      alert('Erreur lors de la génération du PDF : ' + err.message);
+    } finally {
+      zone.innerHTML = '';
+      btn.disabled = false;
+    }
+  });
+
+  $('btn-jpeg').addEventListener('click', async () => {
+    const exp = preparerExport();
+    if (!exp) return;
+    const zone = $('zone-export');
+    zone.innerHTML = exp.html;
+    const btn = $('btn-jpeg');
+    btn.disabled = true;
+    try {
+      const canvas = await html2canvas(zone, { scale: 2, backgroundColor: '#ffffff' });
+      const lien = document.createElement('a');
+      lien.href = canvas.toDataURL('image/jpeg', 0.92);
+      lien.download = nomFichier(exp.titre, 'jpg');
+      lien.click();
+    } catch (err) {
+      alert('Erreur lors de la génération de l\'image : ' + err.message);
+    } finally {
+      zone.innerHTML = '';
+      btn.disabled = false;
+    }
+  });
+
+  $('btn-svg').addEventListener('click', () => {
+    const exp = preparerExport();
+    if (!exp) return;
+    const svg = construireSVGExport(exp.reunions, exp.titre);
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = nomFichier(exp.titre, 'svg');
+    lien.click();
+    URL.revokeObjectURL(url);
   });
 
   if (token) demarrerAdmin();
