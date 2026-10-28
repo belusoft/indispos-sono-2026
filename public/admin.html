@@ -125,6 +125,7 @@
   <div id="ecran-admin" class="cache">
     <div class="tabs">
       <button id="tab-membres" class="actif">Membres &amp; rôles</button>
+      <button id="tab-suivi">Suivi réponses</button>
       <button id="tab-programme">Programme</button>
       <button id="btn-logout" class="secondaire" style="flex: 0 0 auto;">Déconnexion</button>
     </div>
@@ -134,6 +135,23 @@
       <h2>Membres et rôles</h2>
       <p class="resume">Coche les rôles que chaque frère peut assurer. Enregistrement immédiat par frère.</p>
       <div id="liste-membres"></div>
+    </div>
+
+    <!-- Suivi réponses -->
+    <div id="vue-suivi" class="carte cache">
+      <h2>Suivi des réponses au sondage</h2>
+      <div class="mois-select" id="mois-select-suivi"></div>
+      <p class="resume" id="suivi-resume"></p>
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 220px;">
+          <h3 style="color: var(--vert); margin-bottom: 8px;">✅ Ont répondu</h3>
+          <ul id="liste-repondus" style="padding-left: 18px; margin: 0;"></ul>
+        </div>
+        <div style="flex: 1; min-width: 220px;">
+          <h3 style="color: var(--rouge); margin-bottom: 8px;">⏳ N'ont pas répondu</h3>
+          <ul id="liste-non-repondus" style="padding-left: 18px; margin: 0;"></ul>
+        </div>
+      </div>
     </div>
 
     <!-- Programme -->
@@ -160,6 +178,7 @@
   let roles = [];
   let membres = [];
   let moisActuel = 5;
+  let moisActuelSuivi = 5;
 
   const $ = (id) => document.getElementById(id);
 
@@ -218,14 +237,18 @@
   });
 
   $('tab-membres').addEventListener('click', () => basculerVue('membres'));
+  $('tab-suivi').addEventListener('click', () => basculerVue('suivi'));
   $('tab-programme').addEventListener('click', () => basculerVue('programme'));
 
   function basculerVue(nom) {
     $('vue-membres').classList.toggle('cache', nom !== 'membres');
+    $('vue-suivi').classList.toggle('cache', nom !== 'suivi');
     $('vue-programme').classList.toggle('cache', nom !== 'programme');
     $('tab-membres').classList.toggle('actif', nom === 'membres');
+    $('tab-suivi').classList.toggle('actif', nom === 'suivi');
     $('tab-programme').classList.toggle('actif', nom === 'programme');
     if (nom === 'programme') chargerProgramme();
+    if (nom === 'suivi') chargerSuivi();
   }
 
   async function demarrerAdmin() {
@@ -298,6 +321,58 @@
       btn.className = m === moisActuel ? 'actif' : '';
       btn.addEventListener('click', () => { moisActuel = m; chargerProgramme(); });
       conteneur.appendChild(btn);
+    }
+  }
+
+  function renderMoisSelectSuivi() {
+    const conteneur = $('mois-select-suivi');
+    conteneur.innerHTML = '';
+    for (let m = 5; m <= 12; m++) {
+      const btn = document.createElement('button');
+      btn.textContent = MOIS_NOMS[m];
+      btn.className = m === moisActuelSuivi ? 'actif' : '';
+      btn.addEventListener('click', () => { moisActuelSuivi = m; chargerSuivi(); });
+      conteneur.appendChild(btn);
+    }
+  }
+
+  async function chargerSuivi() {
+    renderMoisSelectSuivi();
+    try {
+      const data = await appel('/api/admin/suivi?mois=' + moisActuelSuivi);
+      renderSuivi(data);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function renderSuivi(data) {
+    const total = data.repondus.length + data.nonRepondus.length;
+    $('suivi-resume').textContent = data.repondus.length + ' / ' + total +
+      ' frères ont répondu pour ' + MOIS_NOMS[moisActuelSuivi] + '.';
+
+    const listeRepondus = $('liste-repondus');
+    listeRepondus.innerHTML = '';
+    if (data.repondus.length === 0) {
+      listeRepondus.innerHTML = '<li style="color: var(--texte-clair);">Aucun pour le moment.</li>';
+    } else {
+      data.repondus.forEach((f) => {
+        const li = document.createElement('li');
+        li.textContent = f.nom;
+        listeRepondus.appendChild(li);
+      });
+    }
+
+    const listeNonRepondus = $('liste-non-repondus');
+    listeNonRepondus.innerHTML = '';
+    if (data.nonRepondus.length === 0) {
+      listeNonRepondus.innerHTML = '<li style="color: var(--texte-clair);">Tout le monde a répondu 🎉</li>';
+    } else {
+      data.nonRepondus.forEach((f) => {
+        const li = document.createElement('li');
+        li.textContent = f.nom;
+        listeNonRepondus.appendChild(li);
+      });
     }
   }
 
