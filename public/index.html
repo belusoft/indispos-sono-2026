@@ -192,6 +192,20 @@
     color: #047857;
   }
 
+  .carte-mois.futur {
+    background: #ecfdf5;
+    border-color: var(--dispo);
+    color: #047857;
+  }
+
+  .carte-mois.passe {
+    background: #fef2f2;
+    border-color: var(--indispo);
+    color: #b91c1c;
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+
   .carte-mois .coche {
     position: absolute;
     top: 6px;
@@ -530,6 +544,15 @@ document.getElementById('btn-retour-identification').addEventListener('click', (
 });
 
 // ===== Écran mois =====
+function estMoisPasse(numMois) {
+  const maintenant = new Date();
+  const anneeActuelle = maintenant.getFullYear();
+  const moisActuel = maintenant.getMonth() + 1; // 1-12
+  if (anneeActuelle > 2026) return true;
+  if (anneeActuelle < 2026) return false;
+  return numMois < moisActuel;
+}
+
 function afficherGrilleMois() {
   const donnees = chargerDonneesLocales();
   const grille = document.getElementById('grille-mois');
@@ -539,13 +562,29 @@ function afficherGrilleMois() {
     carte.type = 'button';
     carte.className = 'carte-mois';
     const rempli = donnees[m.num] && Object.keys(donnees[m.num]).length > 0;
-    if (rempli) carte.classList.add('termine');
+    const passe = estMoisPasse(m.num);
+
+    if (passe) {
+      carte.classList.add('passe');
+      carte.disabled = true;
+      carte.setAttribute('aria-disabled', 'true');
+      carte.title = 'Mois déjà passé, saisie fermée.';
+    } else if (rempli) {
+      carte.classList.add('termine');
+    } else {
+      carte.classList.add('futur');
+    }
+
     carte.innerHTML = (rempli ? '<span class="coche">✓</span>' : '') + m.nom;
-    carte.addEventListener('click', () => {
-      moisCourant = m.num;
-      afficherEcran('ecran-saisie');
-      chargerReunionsMois(m.num, m.nom);
-    });
+
+    if (!passe) {
+      carte.addEventListener('click', () => {
+        moisCourant = m.num;
+        afficherEcran('ecran-saisie');
+        chargerReunionsMois(m.num, m.nom);
+      });
+    }
+
     grille.appendChild(carte);
   });
 }
