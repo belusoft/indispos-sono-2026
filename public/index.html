@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes Indispos — Sono & Accueil 2026</title>
+<meta name="description" content="Saisie des disponibilités pour les réunions Sono & Accueil 2026">
+<meta name="theme-color" content="#6366f1">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mes Indispos">
+<style>
+  :root {
+    --primaire: #6366f1;
+    --degrade-debut: #667eea;
+    --degrade-fin: #764ba2;
+    --dispo: #10b981;
+    --indispo: #ef4444;
+    --particip: #f59e0b;
+    --texte: #1f2937;
+    --texte-clair: #6b7280;
+    --fond-carte: #ffffff;
+    --rayon: 16px;
+    --ombre: 0 8px 24px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--texte);
+    background: linear-gradient(160deg, var(--degrade-debut), var(--degrade-fin));
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ecran { display: none; flex-direction: column; gap: 16px; animation: apparition 0.2s ease-out; }
+  .ecran.actif { display: flex; }
+
+  @keyframes apparition {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .carte {
+    background: var(--fond-carte);
+    border-radius: var(--rayon);
+    box-shadow: var(--ombre);
+    padding: 20px;
+  }
+
+  h1 {
+    color: #ffffff;
+    font-size: 1.9rem;
+    text-align: center;
+    margin: 32px 0 4px;
+    font-weight: 700;
+  }
+
+  .sous-titre {
+    color: rgba(255,255,255,0.9);
+    text-align: center;
+    font-size: 1.05rem;
+    margin: 0 0 24px;
+    font-weight: 400;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+    margin: 0 0 8px;
+  }
+
+  p.description { color: var(--texte-clair); font-size: 0.95rem; margin: 0 0 16px; }
+
+  button {
+    font-family: inherit;
+    font-size: 1rem;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    min-height: 52px;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+
+  button:active { transform: scale(0.98); }
+
+  button:focus-visible, input:focus-visible, .carte-mois:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+  }
+
+  .btn-primaire {
+    background: var(--primaire);
+    color: #ffffff;
+    width: 100%;
+  }
+
+  .btn-primaire:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-secondaire {
+    background: #f3f4f6;
+    color: var(--texte);
+    width: 100%;
+  }
+
+  .btn-texte {
+    background: transparent;
+    color: var(--primaire);
+    padding: 10px;
+    min-height: auto;
+  }
+
+  input[type="text"], input[type="search"] {
+    font-family: inherit;
+    font-size: 1rem;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    background: #f9fafb;
+  }
+
+  .liste-freres {
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .item-frere {
+    text-align: left;
+    background: #f9fafb;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-weight: 500;
+    color: var(--texte);
+  }
+
+  .item-frere.selectionne {
+    border-color: var(--primaire);
+    background: #eef2ff;
+    color: var(--primaire);
+    font-weight: 700;
+  }
+
+  .grille-mois {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .carte-mois {
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .carte-mois.termine {
+    background: #ecfdf5;
+    border-color: var(--dispo);
+    color: #047857;
+  }
+
+  .carte-mois .coche {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-size: 0.9rem;
+  }
+
+  .ligne-reunion {
+    border-bottom: 1px solid #f0f1f3;
+    padding: 14px 0;
+  }
+  .ligne-reunion:last-child { border-bottom: none; }
+
+  .libelle-date {
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: capitalize;
+  }
+
+  .choix-etat {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .btn-etat {
+    border-radius: 10px;
+    padding: 12px 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 2px solid #e5e7eb;
+    background: #f9fafb;
+    color: var(--texte-clair);
+  }
+
+  .btn-etat.actif-dispo { background: var(--dispo); border-color: var(--dispo); color: #fff; }
+  .btn-etat.actif-indispo { background: var(--indispo); border-color: var(--indispo); color: #fff; }
+  .btn-etat.actif-particip { background: var(--particip); border-color: var(--particip); color: #fff; }
+
+  .champ-nature {
+    margin-top: 10px;
+  }
+
+  .champ-nature input {
+    font-size: 0.95rem;
+    padding: 12px 14px;
+  }
+
+  .erreur-nature {
+    color: var(--indispo);
+    font-size: 0.82rem;
+    margin-top: 6px;
+    display: none;
+  }
+
+  .erreur-nature.visible { display: block; }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .badge-dispo { background: var(--dispo); }
+  .badge-indispo { background: var(--indispo); }
+  .badge-particip { background: var(--particip); }
+
+  .recap-mois { margin-bottom: 18px; }
+  .recap-mois h3 { font-size: 1.05rem; margin: 0 0 10px; }
+  .recap-ligne {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f1f3;
+    font-size: 0.92rem;
+  }
+  .recap-ligne:last-child { border-bottom: none; }
+  .recap-nature { color: var(--texte-clair); font-size: 0.82rem; margin-left: 8px; }
+
+  .barre-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .message-erreur {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 0.9rem;
+    display: none;
+  }
+  .message-erreur.visible { display: block; }
+
+  .loader {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: tourner 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes tourner { to { transform: rotate(360deg); } }
+
+  .ecran-succes { text-align: center; padding: 40px 20px; }
+  .ecran-succes .icone { font-size: 3.5rem; margin-bottom: 12px; }
+  .ecran-succes h2 { font-size: 1.5rem; }
+
+  .fil-ariane {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .vide {
+    text-align: center;
+    color: var(--texte-clair);
+    padding: 20px;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Écran 1 : Accueil -->
+  <section class="ecran actif" id="ecran-accueil">
+    <h1>Mes Indispos</h1>
+    <p class="sous-titre">Sono &amp; Accueil — 2026</p>
+    <div class="carte">
+      <p class="description">Renseigne tes disponibilités pour les réunions du mardi et du samedi, de mai à décembre 2026.</p>
+      <div class="barre-actions">
+        <button class="btn-primaire" id="btn-commencer">Commencer</button>
+        <button class="btn-secondaire" id="btn-effacer-accueil">Effacer mes données locales</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Écran 2 : Identification du frère -->
+  <section class="ecran" id="ecran-identification">
+    <p class="fil-ariane">Étape 1 sur 3</p>
+    <div class="carte">
+      <h2>Qui es-tu ?</h2>
+      <p class="description">Recherche ton nom dans la liste.</p>
+      <input type="search" id="recherche-frere" placeholder="Rechercher un nom…" autocomplete="off">
+      <div class="liste-freres" id="liste-freres"></div>
+    </div>
+    <button class="btn-primaire" id="btn-suivant-identification" disabled>Suivant</button>
+    <button class="btn-texte" id="btn-retour-identification">← Retour</button>
+  </section>
+
+  <!-- Écran 3 : Choix des mois -->
+  <section class="ecran" id="ecran-mois">
+    <p class="fil-ariane">Étape 2 sur 3</p>
+    <div class="carte">
+      <h2>Choisis un mois</h2>
+      <p class="description">Tu peux renseigner plusieurs mois avant l'envoi final.</p>
+      <div class="grille-mois" id="grille-mois"></div>
+    </div>
+    <button class="btn-primaire" id="btn-vers-recap">Voir le récapitulatif</button>
+    <button class="btn-texte" id="btn-retour-mois">← Changer de personne</button>
+  </section>
+
+  <!-- Écran 4 : Saisie des disponibilités -->
+  <section class="ecran" id="ecran-saisie">
+    <p class="fil-ariane">Étape 2 sur 3</p>
+    <div class="carte">
+      <h2 id="titre-mois-saisie"></h2>
+      <div id="liste-reunions"></div>
+    </div>
+    <div class="message-erreur" id="erreur-saisie"></div>
+    <button class="btn-primaire" id="btn-valider-mois">Valider ce mois</button>
+    <button class="btn-texte" id="btn-retour-saisie">← Retour aux mois</button>
+  </section>
+
+  <!-- Écran 5 : Récapitulatif -->
+  <section class="ecran" id="ecran-recap">
+    <p class="fil-ariane">Étape 3 sur 3</p>
+    <div class="carte">
+      <h2>Récapitulatif</h2>
+      <p class="description" id="recap-nom-frere"></p>
+      <div id="recap-contenu"></div>
+    </div>
+    <div class="message-erreur" id="erreur-envoi"></div>
+    <button class="btn-primaire" id="btn-envoyer">Envoyer mes disponibilités</button>
+    <button class="btn-texte" id="btn-retour-recap">← Ajouter un autre mois</button>
+  </section>
+
+  <!-- Écran 6 : Succès -->
+  <section class="ecran" id="ecran-succes">
+    <div class="carte ecran-succes">
+      <div class="icone">✅</div>
+      <h2>Merci frère !</h2>
+      <p class="description">Tes disponibilités ont bien été enregistrées.</p>
+      <div class="barre-actions">
+        <button class="btn-primaire" id="btn-autre-mois">Renseigner un autre mois</button>
+        <button class="btn-secondaire" id="btn-effacer-succes">Effacer mes données locales</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+'use strict';
+// ===== État =====
+const MOIS = [
+  { num: 5, nom: 'Mai' },
+  { num: 6, nom: 'Juin' },
+  { num: 7, nom: 'Juillet' },
+  { num: 8, nom: 'Août' },
+  { num: 9, nom: 'Septembre' },
+  { num: 10, nom: 'Octobre' },
+  { num: 11, nom: 'Novembre' },
+  { num: 12, nom: 'Décembre' }
+];
+
+const CLE_FRERE = 'mi_frere_id';
+const CLE_NOM = 'mi_frere_nom';
+const CLE_DONNEES = 'mi_donnees'; // { [mois]: { [reunionId]: { etat, nature, date, libelle } } }
+
+let freresDisponibles = [];
+let frereSelectionne = null; // { id, nom }
+let moisCourant = null;
+let reunionsMoisCourant = [];
+
+function chargerDonneesLocales() {
+  try {
+    const brut = localStorage.getItem(CLE_DONNEES);
+    return brut ? JSON.parse(brut) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function sauvegarderDonneesLocales(donnees) {
+  try {
+    localStorage.setItem(CLE_DONNEES, JSON.stringify(donnees));
+  } catch (e) { /* stockage indisponible, on continue sans persister */ }
+}
+
+function effacerDonneesLocales() {
+  localStorage.removeItem(CLE_FRERE);
+  localStorage.removeItem(CLE_NOM);
+  localStorage.removeItem(CLE_DONNEES);
+  frereSelectionne = null;
+}
+
+// ===== Navigation =====
+function afficherEcran(id) {
+  document.querySelectorAll('.ecran').forEach((el) => el.classList.remove('actif'));
+  document.getElementById(id).classList.add('actif');
+}
+
+// ===== Écran accueil =====
+document.getElementById('btn-commencer').addEventListener('click', () => {
+  const idSauve = localStorage.getItem(CLE_FRERE);
+  const nomSauve = localStorage.getItem(CLE_NOM);
+  if (idSauve && nomSauve) {
+    frereSelectionne = { id: parseInt(idSauve, 10), nom: nomSauve };
+  }
+  afficherEcran('ecran-identification');
+  chargerFreres();
+});
+
+document.getElementById('btn-effacer-accueil').addEventListener('click', () => {
+  effacerDonneesLocales();
+  afficherEcran('ecran-accueil');
+});
+
+// ===== Écran identification =====
+async function chargerFreres() {
+  const conteneur = document.getElementById('liste-freres');
+  conteneur.innerHTML = '<p class="vide">Chargement…</p>';
+  try {
+    const reponse = await fetch('/api/freres');
+    const data = await reponse.json();
+    if (!data.ok) throw new Error(data.error || 'Erreur inconnue');
+    freresDisponibles = data.freres;
+    afficherListeFreres(freresDisponibles);
+  } catch (e) {
+    conteneur.innerHTML = '<p class="vide">Impossible de charger la liste. Vérifie ta connexion.</p>';
+  }
+}
+
+function afficherListeFreres(liste) {
+  const conteneur = document.getElementById('liste-freres');
+  if (liste.length === 0) {
+    conteneur.innerHTML = '<p class="vide">Aucun résultat.</p>';
+    return;
+  }
+  conteneur.innerHTML = '';
+  liste.forEach((frere) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'item-frere';
+    btn.textContent = frere.nom;
+    if (frereSelectionne && frereSelectionne.id === frere.id) {
+      btn.classList.add('selectionne');
+    }
+    btn.addEventListener('click', () => {
+      frereSelectionne = { id: frere.id, nom: frere.nom };
+      localStorage.setItem(CLE_FRERE, String(frere.id));
+      localStorage.setItem(CLE_NOM, frere.nom);
+      afficherListeFreres(liste);
+      document.getElementById('btn-suivant-identification').disabled = false;
+    });
+    conteneur.appendChild(btn);
+  });
+}
+
+document.getElementById('recherche-frere').addEventListener('input', (e) => {
+  const terme = e.target.value.trim().toLowerCase();
+  const filtres = freresDisponibles.filter((f) => f.nom.toLowerCase().includes(terme));
+  afficherListeFreres(filtres);
+});
+
+document.getElementById('btn-suivant-identification').addEventListener('click', () => {
+  if (!frereSelectionne) return;
+  afficherEcran('ecran-mois');
+  afficherGrilleMois();
+});
+
+document.getElementById('btn-retour-identification').addEventListener('click', () => {
+  afficherEcran('ecran-accueil');
+});
+
+// ===== Écran mois =====
+function afficherGrilleMois() {
+  const donnees = chargerDonneesLocales();
+  const grille = document.getElementById('grille-mois');
+  grille.innerHTML = '';
+  MOIS.forEach((m) => {
+    const carte = document.createElement('button');
+    carte.type = 'button';
+    carte.className = 'carte-mois';
+    const rempli = donnees[m.num] && Object.keys(donnees[m.num]).length > 0;
+    if (rempli) carte.classList.add('termine');
+    carte.innerHTML = (rempli ? '<span class="coche">✓</span>' : '') + m.nom;
+    carte.addEventListener('click', () => {
+      moisCourant = m.num;
+      afficherEcran('ecran-saisie');
+      chargerReunionsMois(m.num, m.nom);
+    });
+    grille.appendChild(carte);
+  });
+}
+
+document.getElementById('btn-vers-recap').addEventListener('click', () => {
+  afficherEcran('ecran-recap');
+  afficherRecapitulatif();
+});
+
+document.getElementById('btn-retour-mois').addEventListener('click', () => {
+  afficherEcran('ecran-identification');
+});
+
+// ===== Écran saisie =====
+async function chargerReunionsMois(numeroMois, nomMois) {
+  document.getElementById('titre-mois-saisie').textContent = nomMois + ' 2026';
+  const conteneur = document.getElementById('liste-reunions');
+  conteneur.innerHTML = '<p class="vide">Chargement…</p>';
+  document.getElementById('erreur-saisie').classList.remove('visible');
+
+  try {
+    const reponse = await fetch('/api/reunions?mois=' + numeroMois);
+    const data = await reponse.json();
+    if (!data.ok) throw new Error(data.error || 'Erreur inconnue');
+    reunionsMoisCourant = data.reunions;
+    afficherFormulaireReunions(numeroMois);
+  } catch (e) {
+    conteneur.innerHTML = '<p class="vide">Impossible de charger les réunions de ce mois.</p>';
+  }
+}
+
+function formaterDateAffichage(dateIso) {
+  const d = new Date(dateIso + 'T00:00:00');
+  const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  return jours[d.getDay()] + ' ' + d.getDate() + ' ' + mois[d.getMonth()];
+}
+
+function afficherFormulaireReunions(numeroMois) {
+  const donnees = chargerDonneesLocales();
+  const donneesMois = donnees[numeroMois] || {};
+  const conteneur = document.getElementById('liste-reunions');
+
+  if (reunionsMoisCourant.length === 0) {
+    conteneur.innerHTML = '<p class="vide">Aucune réunion ce mois-ci.</p>';
+    return;
+  }
+
+  conteneur.innerHTML = '';
+  reunionsMoisCourant.forEach((reunion) => {
+    const existant = donneesMois[reunion.id];
+
+    const ligne = document.createElement('div');
+    ligne.className = 'ligne-reunion';
+    ligne.dataset.reunionId = reunion.id;
+
+    const titre = document.createElement('div');
+    titre.className = 'libelle-date';
+    titre.textContent = formaterDateAffichage(reunion.date);
+    ligne.appendChild(titre);
+
+    const choix = document.createElement('div');
+    choix.className = 'choix-etat';
+
+    const options = [
+      { valeur: 'dispo', label: '🟢 Disponible', classe: 'actif-dispo' },
+      { valeur: 'indispo', label: '🔴 Indisponible', classe: 'actif-indispo' },
+      { valeur: 'particip', label: '🟠 Participation', classe: 'actif-particip' }
+    ];
+
+    options.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-etat';
+      btn.textContent = opt.label;
+      btn.dataset.valeur = opt.valeur;
+      if (existant && existant.etat === opt.valeur) {
+        btn.classList.add(opt.classe);
+      }
+      btn.addEventListener('click', () => {
+        choix.querySelectorAll('.btn-etat').forEach((b) => {
+          b.classList.remove('actif-dispo', 'actif-indispo', 'actif-particip');
+        });
+        btn.classList.add(opt.classe);
+        ligne.dataset.etat = opt.valeur;
+
+        const champNature = ligne.querySelector('.champ-nature');
+        const erreurNature = ligne.querySelector('.erreur-nature');
+        if (opt.valeur === 'particip') {
+          champNature.style.display = 'block';
+        } else {
+          champNature.style.display = 'none';
+          champNature.querySelector('input').value = '';
+          erreurNature.classList.remove('visible');
+        }
+      });
+      choix.appendChild(btn);
+    });
+
+    ligne.appendChild(choix);
+    if (existant) ligne.dataset.etat = existant.etat;
+
+    const champNature = document.createElement('div');
+    champNature.className = 'champ-nature';
+    champNature.style.display = existant && existant.etat === 'particip' ? 'block' : 'none';
+    const inputNature = document.createElement('input');
+    inputNature.type = 'text';
+    inputNature.placeholder = 'Nature participation…';
+    if (existant && existant.nature) inputNature.value = existant.nature;
+    champNature.appendChild(inputNature);
+    const erreurNature = document.createElement('p');
+    erreurNature.className = 'erreur-nature';
+    erreurNature.textContent = 'Merci de préciser la nature de ta participation.';
+    champNature.appendChild(erreurNature);
+    ligne.appendChild(champNature);
+
+    conteneur.appendChild(ligne);
+  });
+}
+
+document.getElementById('btn-valider-mois').addEventListener('click', () => {
+  const lignes = document.querySelectorAll('#liste-reunions .ligne-reunion');
+  const resultat = {};
+  let valide = true;
+
+  lignes.forEach((ligne) => {
+    const reunionId = ligne.dataset.reunionId;
+    const etat = ligne.dataset.etat;
+    const inputNature = ligne.querySelector('.champ-nature input');
+    const erreurNature = ligne.querySelector('.erreur-nature');
+
+    if (!etat) return; // non renseigné, on l'ignore simplement
+
+    if (etat === 'particip' && !inputNature.value.trim()) {
+      erreurNature.classList.add('visible');
+      valide = false;
+      return;
+    }
+    erreurNature.classList.remove('visible');
+
+    const reunion = reunionsMoisCourant.find((r) => String(r.id) === String(reunionId));
+    resultat[reunionId] = {
+      etat: etat,
+      nature: etat === 'particip' ? inputNature.value.trim() : null,
+      date: reunion.date,
+      libelle: reunion.libelle
+    };
+  });
+
+  const erreurGlobale = document.getElementById('erreur-saisie');
+  if (!valide) {
+    erreurGlobale.textContent = 'Merci de préciser la nature de ta participation pour chaque réunion concernée.';
+    erreurGlobale.classList.add('visible');
+    return;
+  }
+  erreurGlobale.classList.remove('visible');
+
+  const donnees = chargerDonneesLocales();
+  donnees[moisCourant] = resultat;
+  sauvegarderDonneesLocales(donnees);
+
+  afficherEcran('ecran-mois');
+  afficherGrilleMois();
+});
+
+document.getElementById('btn-retour-saisie').addEventListener('click', () => {
+  afficherEcran('ecran-mois');
+  afficherGrilleMois();
+});
+
+// ===== Écran récapitulatif =====
+function libelleEtat(etat) {
+  if (etat === 'dispo') return { texte: 'Disponible', classe: 'badge-dispo' };
+  if (etat === 'indispo') return { texte: 'Indisponible', classe: 'badge-indispo' };
+  return { texte: 'Participation', classe: 'badge-particip' };
+}
+
+function afficherRecapitulatif() {
+  document.getElementById('recap-nom-frere').textContent = 'Frère : ' + (frereSelectionne ? frereSelectionne.nom : '—');
+  const conteneur = document.getElementById('recap-contenu');
+  const donnees = chargerDonneesLocales();
+  const moisRenseignes = Object.keys(donnees).filter((m) => Object.keys(donnees[m]).length > 0);
+
+  if (moisRenseignes.length === 0) {
+    conteneur.innerHTML = '<p class="vide">Aucun mois renseigné pour le moment.</p>';
+    document.getElementById('btn-envoyer').disabled = true;
+    return;
+  }
+  document.getElementById('btn-envoyer').disabled = false;
+
+  conteneur.innerHTML = '';
+  moisRenseignes.sort((a, b) => a - b).forEach((numMois) => {
+    const nomMois = (MOIS.find((m) => m.num === parseInt(numMois, 10)) || {}).nom || numMois;
+    const bloc = document.createElement('div');
+    bloc.className = 'recap-mois';
+    const titre = document.createElement('h3');
+    titre.textContent = nomMois + ' 2026';
+    bloc.appendChild(titre);
+
+    Object.keys(donnees[numMois]).forEach((reunionId) => {
+      const item = donnees[numMois][reunionId];
+      const info = libelleEtat(item.etat);
+      const ligne = document.createElement('div');
+      ligne.className = 'recap-ligne';
+      ligne.innerHTML =
+        '<span>' + formaterDateAffichage(item.date) +
+        (item.etat === 'particip' ? '<span class="recap-nature">(' + item.nature + ')</span>' : '') +
+        '</span><span class="badge ' + info.classe + '">' + info.texte + '</span>';
+      bloc.appendChild(ligne);
+    });
+
+    conteneur.appendChild(bloc);
+  });
+}
+
+document.getElementById('btn-retour-recap').addEventListener('click', () => {
+  afficherEcran('ecran-mois');
+  afficherGrilleMois();
+});
+
+document.getElementById('btn-envoyer').addEventListener('click', async () => {
+  const bouton = document.getElementById('btn-envoyer');
+  const erreurEnvoi = document.getElementById('erreur-envoi');
+  erreurEnvoi.classList.remove('visible');
+
+  const donnees = chargerDonneesLocales();
+  const items = [];
+  Object.keys(donnees).forEach((numMois) => {
+    Object.keys(donnees[numMois]).forEach((reunionId) => {
+      const item = donnees[numMois][reunionId];
+      items.push({
+        reunionId: parseInt(reunionId, 10),
+        etat: item.etat,
+        nature: item.etat === 'particip' ? item.nature : null
+      });
+    });
+  });
+
+  if (items.length === 0 || !frereSelectionne) return;
+
+  const texteInitial = bouton.textContent;
+  bouton.disabled = true;
+  bouton.innerHTML = '<span class="loader"></span>Envoi en cours…';
+
+  try {
+    const reponse = await fetch('/api/disponibilites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ frereId: frereSelectionne.id, items: items })
+    });
+    const data = await reponse.json();
+    if (!data.ok) throw new Error(data.error || 'Erreur lors de l\'envoi.');
+
+    afficherEcran('ecran-succes');
+  } catch (e) {
+    erreurEnvoi.textContent = e.message || 'Une erreur est survenue. Réessaie dans un instant.';
+    erreurEnvoi.classList.add('visible');
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = texteInitial;
+  }
+});
+
+// ===== Écran succès =====
+document.getElementById('btn-autre-mois').addEventListener('click', () => {
+  afficherEcran('ecran-mois');
+  afficherGrilleMois();
+});
+
+document.getElementById('btn-effacer-succes').addEventListener('click', () => {
+  effacerDonneesLocales();
+  afficherEcran('ecran-accueil');
+});
+
+// ===== Service worker =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// ===== Initialisation =====
+(function initialiser() {
+  const idSauve = localStorage.getItem(CLE_FRERE);
+  const nomSauve = localStorage.getItem(CLE_NOM);
+  if (idSauve && nomSauve) {
+    frereSelectionne = { id: parseInt(idSauve, 10), nom: nomSauve };
+  }
+})();
+
+</script>
+</body>
+</html>

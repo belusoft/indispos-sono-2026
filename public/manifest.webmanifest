@@ -1,0 +1,25 @@
+{
+  "name": "Mes Indispos — Sono & Accueil 2026",
+  "short_name": "Mes Indispos",
+  "description": "Saisie des disponibilités pour les réunions Sono & Accueil 2026",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#6366f1",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

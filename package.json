@@ -1,0 +1,12 @@
+{
+  "name": "mes-indispos-sono-accueil",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PWA de saisie des disponibilités - Sono & Accueil 2026",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.3"
+  }
+}
