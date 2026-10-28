@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration — Sono &amp; Accueil 2026</title>
+<style>
+  :root {
+    --primaire: #6366f1;
+    --primaire-fonce: #4f46e5;
+    --degrade-1: #667eea;
+    --degrade-2: #764ba2;
+    --vert: #10b981;
+    --rouge: #ef4444;
+    --orange: #f59e0b;
+    --gris: #94a3b8;
+    --bg: #f4f5fb;
+    --carte: #ffffff;
+    --texte: #1e1b2e;
+    --texte-clair: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--texte);
+  }
+  header {
+    background: linear-gradient(135deg, var(--degrade-1), var(--degrade-2));
+    color: #fff;
+    padding: 20px 16px;
+  }
+  header h1 { margin: 0; font-size: 1.3rem; }
+  header p { margin: 4px 0 0; opacity: 0.9; font-size: 0.85rem; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .carte {
+    background: var(--carte);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  input[type="password"], select, input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  input:focus, select:focus, button:focus {
+    outline: 3px solid var(--primaire);
+    outline-offset: 1px;
+  }
+  button {
+    background: var(--primaire);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: var(--primaire-fonce); }
+  button.secondaire { background: #e5e7eb; color: var(--texte); }
+  button.secondaire:hover { background: #d1d5db; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .erreur { color: var(--rouge); font-size: 0.9rem; margin: 8px 0; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button { flex: 1; background: #e5e7eb; color: var(--texte); }
+  .tabs button.actif { background: var(--primaire); color: #fff; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+  .roles-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #ddd; border-radius: 999px; padding: 4px 10px;
+    font-size: 0.8rem; cursor: pointer; user-select: none;
+  }
+  .chip.actif { background: var(--primaire); color: #fff; border-color: var(--primaire); }
+  .mois-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .mois-select button { flex: 0 0 auto; background: #e5e7eb; color: var(--texte); padding: 8px 14px; font-size: 0.85rem; }
+  .mois-select button.actif { background: var(--primaire); color: #fff; }
+  .reunion-bloc { border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+  .reunion-bloc h3 { margin: 0 0 10px; font-size: 1rem; }
+  .slot-ligne { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .slot-ligne .role-nom { flex: 0 0 200px; font-size: 0.85rem; font-weight: 600; }
+  .slot-ligne select { margin-bottom: 0; flex: 1; }
+  .etat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .etat-dispo { background: var(--vert); }
+  .etat-indispo { background: var(--rouge); }
+  .etat-particip { background: var(--orange); }
+  .etat-sans { background: var(--gris); }
+  .barre-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .resume { font-size: 0.85rem; color: var(--texte-clair); margin-top: 8px; }
+  .cache { display: none; }
+  .loader {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #fff; border-top-color: transparent;
+    border-radius: 50%; animation: tourne 0.6s linear infinite; vertical-align: middle;
+  }
+  @keyframes tourne { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Administration</h1>
+  <p>Sono &amp; Accueil — 2026</p>
+</header>
+
+<div class="wrap">
+
+  <!-- Écran connexion -->
+  <div id="ecran-login" class="carte">
+    <h2>Connexion administrateur</h2>
+    <input type="password" id="mdp-input" placeholder="Mot de passe admin" autocomplete="current-password">
+    <div id="login-erreur" class="erreur cache"></div>
+    <button id="btn-login">Se connecter</button>
+  </div>
+
+  <!-- Écran admin -->
+  <div id="ecran-admin" class="cache">
+    <div class="tabs">
+      <button id="tab-membres" class="actif">Membres &amp; rôles</button>
+      <button id="tab-programme">Programme</button>
+      <button id="btn-logout" class="secondaire" style="flex: 0 0 auto;">Déconnexion</button>
+    </div>
+
+    <!-- Membres -->
+    <div id="vue-membres" class="carte">
+      <h2>Membres et rôles</h2>
+      <p class="resume">Coche les rôles que chaque frère peut assurer. Enregistrement immédiat par frère.</p>
+      <div id="liste-membres"></div>
+    </div>
+
+    <!-- Programme -->
+    <div id="vue-programme" class="carte cache">
+      <h2>Programme du mois</h2>
+      <div class="mois-select" id="mois-select"></div>
+      <div class="barre-actions">
+        <button id="btn-auto-vide">Auto-attribuer (cases vides)</button>
+        <button id="btn-auto-tout" class="secondaire">Régénérer tout le mois</button>
+      </div>
+      <div id="auto-resultat" class="resume cache"></div>
+      <div id="liste-reunions"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const MOIS_NOMS = ['', 'Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const ETAT_LABEL = { dispo: 'Disponible', indispo: 'Indisponible', particip: 'Participation' };
+
+  let token = localStorage.getItem('mi_admin_token') || null;
+  let roles = [];
+  let membres = [];
+  let moisActuel = 5;
+
+  const $ = (id) => document.getElementById(id);
+
+  function afficherErreurLogin(msg) {
+    const el = $('login-erreur');
+    el.textContent = msg;
+    el.classList.remove('cache');
+  }
+
+  async function appel(url, options = {}) {
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+    if (token) headers['x-admin-token'] = token;
+    const resp = await fetch(url, Object.assign({}, options, { headers }));
+    const data = await resp.json();
+    if (resp.status === 401) {
+      deconnexion();
+      throw new Error('Session expirée, merci de te reconnecter.');
+    }
+    if (!data.ok) throw new Error(data.error || 'Erreur inconnue.');
+    return data;
+  }
+
+  function deconnexion() {
+    token = null;
+    localStorage.removeItem('mi_admin_token');
+    $('ecran-admin').classList.add('cache');
+    $('ecran-login').classList.remove('cache');
+  }
+
+  $('btn-login').addEventListener('click', async () => {
+    const mdp = $('mdp-input').value;
+    if (!mdp) { afficherErreurLogin('Mot de passe requis.'); return; }
+    $('login-erreur').classList.add('cache');
+    $('btn-login').disabled = true;
+    try {
+      const resp = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: mdp })
+      });
+      const data = await resp.json();
+      if (!data.ok) { afficherErreurLogin(data.error || 'Connexion refusée.'); return; }
+      token = data.token;
+      localStorage.setItem('mi_admin_token', token);
+      demarrerAdmin();
+    } catch (err) {
+      afficherErreurLogin('Erreur réseau. Réessaie.');
+    } finally {
+      $('btn-login').disabled = false;
+    }
+  });
+
+  $('btn-logout').addEventListener('click', async () => {
+    try { await appel('/api/admin/logout', { method: 'POST' }); } catch (e) {}
+    deconnexion();
+  });
+
+  $('tab-membres').addEventListener('click', () => basculerVue('membres'));
+  $('tab-programme').addEventListener('click', () => basculerVue('programme'));
+
+  function basculerVue(nom) {
+    $('vue-membres').classList.toggle('cache', nom !== 'membres');
+    $('vue-programme').classList.toggle('cache', nom !== 'programme');
+    $('tab-membres').classList.toggle('actif', nom === 'membres');
+    $('tab-programme').classList.toggle('actif', nom === 'programme');
+    if (nom === 'programme') chargerProgramme();
+  }
+
+  async function demarrerAdmin() {
+    $('ecran-login').classList.add('cache');
+    $('ecran-admin').classList.remove('cache');
+    try {
+      const rRoles = await appel('/api/admin/roles');
+      roles = rRoles.roles;
+      await chargerMembres();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function chargerMembres() {
+    const data = await appel('/api/admin/membres');
+    membres = data.membres;
+    renderMembres();
+  }
+
+  function renderMembres() {
+    const conteneur = $('liste-membres');
+    conteneur.innerHTML = '';
+    membres.forEach((m) => {
+      const bloc = document.createElement('div');
+      bloc.style.borderBottom = '1px solid #eee';
+      bloc.style.padding = '10px 0';
+
+      const titre = document.createElement('div');
+      titre.style.fontWeight = '600';
+      titre.style.marginBottom = '6px';
+      titre.textContent = m.nom;
+      bloc.appendChild(titre);
+
+      const chips = document.createElement('div');
+      chips.className = 'roles-chips';
+      roles.forEach((r) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip' + (m.roleIds.includes(r.id) ? ' actif' : '');
+        chip.textContent = r.nom;
+        chip.addEventListener('click', async () => {
+          const nouveau = m.roleIds.includes(r.id)
+            ? m.roleIds.filter((id) => id !== r.id)
+            : m.roleIds.concat(r.id);
+          chip.classList.toggle('actif');
+          try {
+            await appel('/api/admin/membres', {
+              method: 'PUT',
+              body: JSON.stringify({ frereId: m.id, roleIds: nouveau })
+            });
+            m.roleIds = nouveau;
+          } catch (err) {
+            chip.classList.toggle('actif');
+            alert(err.message);
+          }
+        });
+        chips.appendChild(chip);
+      });
+      bloc.appendChild(chips);
+      conteneur.appendChild(bloc);
+    });
+  }
+
+  function renderMoisSelect() {
+    const conteneur = $('mois-select');
+    conteneur.innerHTML = '';
+    for (let m = 5; m <= 12; m++) {
+      const btn = document.createElement('button');
+      btn.textContent = MOIS_NOMS[m];
+      btn.className = m === moisActuel ? 'actif' : '';
+      btn.addEventListener('click', () => { moisActuel = m; chargerProgramme(); });
+      conteneur.appendChild(btn);
+    }
+  }
+
+  let programmeData = { reunions: [], roles: [] };
+
+  async function chargerProgramme() {
+    renderMoisSelect();
+    $('auto-resultat').classList.add('cache');
+    const data = await appel('/api/admin/programme?mois=' + moisActuel);
+    programmeData = data;
+    renderProgramme();
+  }
+
+  function renderProgramme() {
+    const conteneur = $('liste-reunions');
+    conteneur.innerHTML = '';
+
+    programmeData.reunions.forEach((reunion) => {
+      const bloc = document.createElement('div');
+      bloc.className = 'reunion-bloc';
+
+      const h3 = document.createElement('h3');
+      h3.textContent = reunion.libelle.charAt(0).toUpperCase() + reunion.libelle.slice(1);
+      bloc.appendChild(h3);
+
+      const disposParFrere = new Map();
+      reunion.disponibilites.forEach((d) => disposParFrere.set(d.frereId, d));
+
+      reunion.slots.forEach((slot) => {
+        const ligne = document.createElement('div');
+        ligne.className = 'slot-ligne';
+
+        const nomRole = document.createElement('span');
+        nomRole.className = 'role-nom';
+        nomRole.textContent = slot.roleNom;
+        ligne.appendChild(nomRole);
+
+        const select = document.createElement('select');
+        const optionVide = document.createElement('option');
+        optionVide.value = '';
+        optionVide.textContent = '— Non attribué —';
+        select.appendChild(optionVide);
+
+        const eligibles = membres.filter((m) => m.roleIds.includes(slot.roleId));
+        eligibles.forEach((m) => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          const d = disposParFrere.get(m.id);
+          const etatTxt = d ? ETAT_LABEL[d.etat] + (d.nature ? ' — ' + d.nature : '') : 'Sans réponse';
+          opt.textContent = m.nom + ' (' + etatTxt + ')';
+          if (d && d.etat === 'indispo') opt.textContent += ' ⚠';
+          if (slot.frereId === m.id) opt.selected = true;
+          select.appendChild(opt);
+        });
+
+        select.addEventListener('change', async () => {
+          const frereId = select.value ? parseInt(select.value, 10) : null;
+          try {
+            await appel('/api/admin/programme', {
+              method: 'POST',
+              body: JSON.stringify({ reunionId: reunion.id, roleId: slot.roleId, frereId })
+            });
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+
+        ligne.appendChild(select);
+        bloc.appendChild(ligne);
+      });
+
+      conteneur.appendChild(bloc);
+    });
+  }
+
+  async function lancerAutoAssign(overwrite) {
+    const btn = overwrite ? $('btn-auto-tout') : $('btn-auto-vide');
+    btn.disabled = true;
+    try {
+      const data = await appel('/api/admin/auto-assign', {
+        method: 'POST',
+        body: JSON.stringify({ mois: moisActuel, overwrite })
+      });
+      const resEl = $('auto-resultat');
+      resEl.textContent = data.remplis + ' / ' + data.totalSlots + ' rôles attribués pour ' + MOIS_NOMS[moisActuel] + '.';
+      resEl.classList.remove('cache');
+      await chargerProgramme();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  $('btn-auto-vide').addEventListener('click', () => lancerAutoAssign(false));
+  $('btn-auto-tout').addEventListener('click', () => {
+    if (confirm('Régénérer tout le programme du mois écrasera les attributions manuelles existantes. Continuer ?')) {
+      lancerAutoAssign(true);
+    }
+  });
+
+  if (token) demarrerAdmin();
+})();
+</script>
+
+</body>
+</html>

@@ -15,11 +15,14 @@ PWA légère (HTML/CSS/JS vanilla) + Vercel Serverless Functions + Neon Postgres
 1. Dans la console Neon, ouvre l'onglet **SQL Editor**.
 2. Colle le contenu du fichier `db/schema.sql` et exécute-le.
    Cela crée les tables `freres`, `reunions`, `disponibilites`, les index, et génère automatiquement toutes les réunions (mardis/samedis) de mai à décembre 2026.
-3. Ajoute les frères de l'équipe, par exemple :
+3. Ajoute les frères de l'équipe en remplaçant les noms ci-dessous par la vraie liste
+   (utilise le format « Prénom I. » pour distinguer les homonymes) :
    ```sql
-   INSERT INTO freres (nom) VALUES ('Jean'), ('Paul'), ('Pierre')
+   INSERT INTO freres (nom) VALUES ('Prénom N.')
    ON CONFLICT (nom) DO NOTHING;
    ```
+   ⚠️ Ne pas exécuter cette requête avec des noms d'exemple littéraux — remplace-les
+   d'abord par les vrais noms, sous peine d'insérer des frères fictifs en base.
 
 ## 3. Connexion à Vercel
 
@@ -69,10 +72,20 @@ PWA légère (HTML/CSS/JS vanilla) + Vercel Serverless Functions + Neon Postgres
 │   └── icons/
 │       ├── icon-192.png
 │       └── icon-512.png
+│   ├── admin.html          (espace administrateur)
 ├── api/
 │   ├── freres.js
 │   ├── reunions.js
-│   └── disponibilites.js
+│   ├── disponibilites.js
+│   ├── _lib/
+│   │   └── auth.js         (vérif. token admin — jamais exposé comme route)
+│   └── admin/
+│       ├── login.js
+│       ├── logout.js
+│       ├── roles.js
+│       ├── membres.js
+│       ├── programme.js
+│       └── auto-assign.js
 ├── db/
 │   └── schema.sql
 ├── package.json
@@ -80,6 +93,16 @@ PWA légère (HTML/CSS/JS vanilla) + Vercel Serverless Functions + Neon Postgres
 └── README.md
 ```
 
+## Espace Administration (`/admin.html`)
+
+Permet de construire le programme de service (Audio, Vidéo, Perches, Estrade, Accueil…) à partir des disponibilités saisies par les frères.
+
+- **Authentification** : mot de passe partagé, vérifié côté serveur (`ADMIN_PASSWORD`, variable d'environnement — jamais exposée au client). La connexion crée un jeton stocké en base (`admin_sessions`), valable 12h, envoyé ensuite dans l'en-tête `x-admin-token`. Aucune logique de sécurité côté navigateur.
+- **Membres & rôles** : coche les rôles que chaque frère peut assurer (table `membre_roles`).
+- **Programme** : pour chaque mois, affiche les réunions et les 9 rôles à pourvoir ; attribution manuelle via menu déroulant (avec l'état de disponibilité affiché), ou génération automatique.
+- **Auto-attribution** (`api/admin/auto-assign.js`) : algorithme de répartition équitable (pas d'IA/LLM) — pour chaque rôle non pourvu, sélectionne parmi les frères habilités et non indisponibles celui qui a la meilleure priorité (disponible > participation > sans réponse), puis en cas d'égalité celui qui a été affecté le moins souvent récemment (rotation). Deux modes : ne remplir que les cases vides, ou régénérer tout le mois (écrase les affectations manuelles, confirmation demandée).
+- Pour configurer/changer le mot de passe : variable d'environnement Vercel `ADMIN_PASSWORD` (Project Settings → Environment Variables), puis redéployer.
+
 ## Note sur la sécurité
 
-Cette version n'a pas d'authentification : n'importe qui ayant le lien peut soumettre des disponibilités pour n'importe quel frère de la liste. La structure (routes API séparées, validation stricte côté serveur) est prête pour ajouter plus tard un code d'accès ou un lien à jeton sans tout réécrire — mais ce n'est pas encore en place. À évaluer selon le niveau de confidentialité souhaité avant une diffusion large.
+La saisie des disponibilités (`/index.html`) n'a pas d'authentification : n'importe qui ayant le lien peut soumettre des disponibilités pour n'importe quel frère de la liste — à évaluer selon le niveau de confidentialité souhaité avant une diffusion large. L'espace `/admin.html`, lui, est protégé par mot de passe vérifié côté serveur.
