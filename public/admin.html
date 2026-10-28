@@ -138,6 +138,20 @@
   .export-doc td { padding: 6px 4px; font-size: 0.9rem; border-bottom: 1px solid #eee; }
   .export-doc td.role { font-weight: 600; width: 55%; }
   .export-doc td.vide { color: #b91c1c; font-style: italic; }
+
+  .panel-danger {
+    background: #fff7ed;
+    border: 2px solid var(--orange);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .panel-danger p { margin: 0 0 10px; font-size: 0.88rem; color: #9a3412; font-weight: 600; }
+  .panel-danger .ligne { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .panel-danger select { width: auto; margin-bottom: 0; flex: 0 0 auto; min-width: 150px; }
+  button.danger { background: var(--orange); color: #fff; }
+  button.danger:hover { background: #d97706; }
+
   .loader {
     display: inline-block; width: 16px; height: 16px;
     border: 2px solid #fff; border-top-color: transparent;
@@ -203,8 +217,22 @@
       <div class="barre-actions">
         <button id="btn-auto-vide">Auto-attribuer (cases vides)</button>
         <button id="btn-auto-tout" class="secondaire">Régénérer tout le mois</button>
+        <button id="btn-effacer-ouvrir" class="danger">🗑️ Effacer les attributions</button>
       </div>
       <div id="auto-resultat" class="resume cache"></div>
+
+      <div id="panel-effacer" class="panel-danger cache">
+        <p>⚠️ Attention : cette action retire les frères déjà attribués (manuellement ou automatiquement). Les disponibilités saisies par les frères ne sont pas touchées.</p>
+        <div class="ligne">
+          <select id="effacer-scope">
+            <option value="mois">Tout le mois</option>
+            <option value="jour">Une date précise</option>
+          </select>
+          <select id="effacer-date" class="cache"></select>
+          <button id="btn-effacer-confirmer" class="danger">Confirmer l'effacement</button>
+          <button id="btn-effacer-annuler" class="secondaire">Annuler</button>
+        </div>
+      </div>
 
       <label style="font-size: 0.85rem; font-weight: 600; color: var(--texte-clair); display: block; margin-bottom: 6px;">
         Publier le programme
@@ -510,6 +538,7 @@
     });
 
     remplirSelectDatePublication();
+    remplirSelectEffacerDate();
   }
 
   async function lancerAutoAssign(overwrite) {
@@ -748,6 +777,66 @@
     lien.download = nomFichier(exp.titre, 'svg');
     lien.click();
     URL.revokeObjectURL(url);
+  });
+
+  // ===== Effacement des attributions =====
+
+  function remplirSelectEffacerDate() {
+    const sel = $('effacer-date');
+    sel.innerHTML = '';
+    programmeData.reunions.forEach((r) => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = capitalise(r.libelle);
+      sel.appendChild(opt);
+    });
+    sel.classList.toggle('cache', $('effacer-scope').value === 'mois');
+  }
+
+  $('btn-effacer-ouvrir').addEventListener('click', () => {
+    $('panel-effacer').classList.toggle('cache');
+  });
+
+  $('btn-effacer-annuler').addEventListener('click', () => {
+    $('panel-effacer').classList.add('cache');
+  });
+
+  $('effacer-scope').addEventListener('change', () => {
+    $('effacer-date').classList.toggle('cache', $('effacer-scope').value === 'mois');
+  });
+
+  $('btn-effacer-confirmer').addEventListener('click', async () => {
+    const scope = $('effacer-scope').value;
+    const corps = { mois: moisActuel };
+    let messageConfirmation = 'Effacer toutes les attributions de ' + MOIS_NOMS[moisActuel] + ' ? Cette action est irréversible.';
+
+    if (scope === 'jour') {
+      const idSel = parseInt($('effacer-date').value, 10);
+      const reunion = programmeData.reunions.find((r) => r.id === idSel);
+      if (!reunion) { alert('Date introuvable.'); return; }
+      corps.reunionId = idSel;
+      messageConfirmation = 'Effacer toutes les attributions de « ' + capitalise(reunion.libelle) + ' » ? Cette action est irréversible.';
+    }
+
+    if (!confirm(messageConfirmation)) return;
+
+    const btn = $('btn-effacer-confirmer');
+    btn.disabled = true;
+    try {
+      const data = await appel('/api/admin/clear-programme', {
+        method: 'POST',
+        body: JSON.stringify(corps)
+      });
+      const resEl = $('auto-resultat');
+      resEl.textContent = data.effaces + ' attribution(s) effacée(s).';
+      resEl.classList.remove('cache');
+      $('panel-effacer').classList.add('cache');
+      await chargerProgramme();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   if (token) demarrerAdmin();
