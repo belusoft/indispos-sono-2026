@@ -212,7 +212,11 @@
     <div id="vue-suivi" class="carte cache">
       <h2>Suivi des réponses au sondage</h2>
       <div class="mois-select" id="mois-select-suivi"></div>
-      <p class="resume" id="suivi-resume"></p>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <p class="resume" id="suivi-resume" style="margin: 0;"></p>
+        <button id="btn-actualiser-suivi" class="secondaire" style="font-size: 0.78rem; padding: 5px 10px;">🔄 Actualiser</button>
+        <span class="resume" id="suivi-derniere-maj" style="margin: 0;"></span>
+      </div>
 
       <h3 style="color: var(--vert); margin: 10px 0 8px;">✅ Ont répondu — détail par date</h3>
       <div style="overflow-x: auto;">
@@ -342,6 +346,8 @@
   $('tab-suivi').addEventListener('click', () => basculerVue('suivi'));
   $('tab-programme').addEventListener('click', () => basculerVue('programme'));
 
+  let minuteurSuivi = null;
+
   function basculerVue(nom) {
     $('vue-membres').classList.toggle('cache', nom !== 'membres');
     $('vue-suivi').classList.toggle('cache', nom !== 'suivi');
@@ -350,7 +356,14 @@
     $('tab-suivi').classList.toggle('actif', nom === 'suivi');
     $('tab-programme').classList.toggle('actif', nom === 'programme');
     if (nom === 'programme') chargerProgramme();
-    if (nom === 'suivi') chargerSuivi();
+
+    if (minuteurSuivi) { clearInterval(minuteurSuivi); minuteurSuivi = null; }
+    if (nom === 'suivi') {
+      chargerSuivi();
+      // Rafraîchissement automatique toutes les 15s tant que l'onglet est affiché,
+      // pour voir les nouvelles réponses des frères sans action manuelle.
+      minuteurSuivi = setInterval(chargerSuivi, 15000);
+    }
   }
 
   async function demarrerAdmin() {
@@ -547,11 +560,14 @@
     }
   }
 
+  $('btn-actualiser-suivi').addEventListener('click', () => chargerSuivi());
+
   async function chargerSuivi() {
     renderMoisSelectSuivi();
     try {
       const data = await appel('/api/admin/suivi?mois=' + moisActuel);
       renderSuivi(data);
+      $('suivi-derniere-maj').textContent = 'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR');
     } catch (err) {
       alert(err.message);
     }
