@@ -14,6 +14,8 @@
 <style>
   :root {
     --primaire: #6366f1;
+    --primaire-fonce: #4338ca;
+    --retour: #dc2626;
     --degrade-debut: #667eea;
     --degrade-fin: #764ba2;
     --dispo: #10b981;
@@ -109,7 +111,7 @@
   }
 
   .btn-primaire {
-    background: var(--primaire);
+    background: var(--primaire-fonce);
     color: #ffffff;
     width: 100%;
   }
@@ -125,11 +127,24 @@
     width: 100%;
   }
 
+  /* Boutons "retour" : fond blanc opaque + texte rouge, pour un vrai contraste
+     sur le dégradé violet du fond (le texte violet transparent d'avant était
+     quasi invisible). */
   .btn-texte {
-    background: transparent;
-    color: var(--primaire);
-    padding: 10px;
-    min-height: auto;
+    background: #ffffff;
+    color: var(--retour);
+    border: 2px solid var(--retour);
+    padding: 10px 18px;
+    min-height: 44px;
+    width: auto;
+    align-self: center;
+  }
+
+  .btn-texte:hover { background: #fef2f2; }
+
+  .btn-texte:focus-visible {
+    outline: 3px solid var(--retour);
+    outline-offset: 2px;
   }
 
   input[type="text"], input[type="search"] {
