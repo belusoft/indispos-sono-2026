@@ -4,7 +4,7 @@
   "private": true,
   "description": "PWA de saisie des disponibilités - Sono & Accueil 2026",
   "engines": {
-    "node": ">=18"
+    "node": "24.x"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.3"
