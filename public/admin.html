@@ -179,6 +179,35 @@
     border-radius: 50%; animation: tourne 0.6s linear infinite; vertical-align: middle;
   }
   @keyframes tourne { to { transform: rotate(360deg); } }
+  /* --- Lot 2 : import VCM --- */
+  .vcm-bloc { background: #fafafa; border: 1px solid var(--bordure, #e5e7eb); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+  .vcm-bloc h3 { margin: 0 0 10px; font-size: 1rem; }
+  .vcm-barre { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .vcm-info { font-size: 0.8rem; color: var(--texte-clair); margin-top: 8px; }
+  .vcm-revue { margin-top: 14px; }
+  .vcm-jour { border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: 10px; }
+  .vcm-jour > h4 { margin: 0 0 8px; font-size: 0.9rem; color: var(--primaire); }
+  .vcm-ligne { display: grid; grid-template-columns: 1.1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .vcm-ligne .nomvcm { font-weight: 600; font-size: 0.88rem; }
+  .vcm-ligne .partvcm { font-size: 0.78rem; color: var(--texte-clair); }
+  .vcm-ligne select { font-size: 0.82rem; padding: 5px 6px; }
+  .vcm-chip { font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .vcm-chip.sur { background: #dcfce7; color: #166534; }
+  .vcm-chip.conf { background: #ffedd5; color: #9a3412; }
+  .vcm-chip.inc { background: #f1f5f9; color: #64748b; }
+  @media (max-width: 560px) { .vcm-ligne { grid-template-columns: 1fr; } }
+  /* Pastille orange "déjà au VCM" dans le programme */
+  .vcm-note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 10px; margin: 2px 0 10px; font-size: 0.82rem; color: #9a3412; }
+  .vcm-note b { color: #7c2d12; }
+  .vcm-dot { color: #ea580c; }
+  option.vcm-busy { color: #c2410c; }
+  /* Modale visionneuse PDF */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .modal-overlay.cache { display: none; }
+  .modal-box { background: #fff; border-radius: 10px; width: min(900px, 96vw); height: min(90vh, 100%); display: flex; flex-direction: column; overflow: hidden; }
+  .modal-tete { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; }
+  .modal-tete h3 { margin: 0; font-size: 0.95rem; }
+  .modal-box iframe { flex: 1; width: 100%; border: 0; }
 </style>
 </head>
 <body>
@@ -242,6 +271,18 @@
       </div>
       <div class="mois-select" id="mois-select"></div>
       <div class="prog-empty cache" id="prog-empty"></div>
+
+      <div class="vcm-bloc">
+        <h3>📄 Programme VCM du mois</h3>
+        <div class="vcm-barre">
+          <input type="file" id="vcm-file" accept="application/pdf" style="display:none">
+          <button id="vcm-importer">📥 Importer un PDF VCM</button>
+          <button id="vcm-voir" class="secondaire cache">👁️ Voir le PDF</button>
+        </div>
+        <div class="vcm-info" id="vcm-info">Importe le PDF VCM du mois : les frères déjà en participation ce soir-là apparaîtront en orange dans le programme, même sans réponse de disponibilité.</div>
+        <div class="vcm-revue cache" id="vcm-revue"></div>
+      </div>
+
       <div class="barre-actions">
         <button id="btn-auto-vide">Auto-attribuer (cases vides)</button>
         <button id="btn-auto-tout" class="secondaire">Régénérer tout le mois</button>
@@ -287,8 +328,22 @@
 
 <div id="zone-export" style="position: absolute; left: -9999px; top: 0;"></div>
 
+<div class="modal-overlay cache" id="pdf-modal">
+  <div class="modal-box">
+    <div class="modal-tete">
+      <h3 id="pdf-modal-titre">PDF VCM</h3>
+      <button id="pdf-modal-fermer" class="secondaire">Fermer</button>
+    </div>
+    <iframe id="pdf-modal-frame" title="PDF VCM"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 (function () {
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
   const MOIS_NOMS = ['', 'Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const ETAT_LABEL = { dispo: 'Disponible', indispo: 'Indisponible', particip: 'Participation' };
 
@@ -677,6 +732,7 @@
     programmeData = data;
     renderProgramme();
     majEtatVide();
+    vcmMajBoutonVoir();
   }
 
   function majEtatVide() {
@@ -709,6 +765,276 @@
     }
   }
 
+  // ================= Lot 2 : import du programme VCM =================
+  const VCM_MOIS = { 'JANVIER':1,'FÉVRIER':2,'FEVRIER':2,'MARS':3,'AVRIL':4,'MAI':5,'JUIN':6,'JUILLET':7,'AOÛT':8,'AOUT':8,'SEPTEMBRE':9,'OCTOBRE':10,'NOVEMBRE':11,'DÉCEMBRE':12,'DECEMBRE':12 };
+  let vcmRevueData = null;
+
+  function vcmNormal(s) {
+    return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[.\-']/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function vcmEstNom(s) {
+    s = s.replace(/\s*\/\s*$/, '').trim();
+    if (!s || s.includes(':') || s.includes('(') || /\d/.test(s)) return null;
+    if (/^(Salle|Élève|Vidéo)/i.test(s)) return null;
+    if (/^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]+(?:\s[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]+)*\s+(?:[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'’\-]+|[A-ZÀ-ÖØ-Þ]\.)$/.test(s)) return s;
+    return null;
+  }
+
+  async function vcmParsePdf(arrayBuffer) {
+    const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const all = [];
+    let titre = '';
+    for (let p = 1; p <= doc.numPages; p++) {
+      const page = await doc.getPage(p);
+      const tc = await page.getTextContent();
+      for (const it of tc.items) {
+        const s = (it.str || '').trim();
+        if (!s) continue;
+        if (/PROGRAMME VCM/i.test(s)) titre = s;
+        all.push({ p, y: Math.round(it.transform[5]), x: Math.round(it.transform[4]), s });
+      }
+    }
+    all.sort((a, b) => a.p - b.p || b.y - a.y || a.x - b.x);
+
+    let mois = null, annee = null;
+    const mt = titre.match(/VCM\s+DE\s+([A-ZÀ-Ý]+)\s+(\d{4})/i);
+    if (mt) { mois = VCM_MOIS[mt[1].toUpperCase()] || null; annee = parseInt(mt[2], 10); }
+
+    const LABELS = [
+      { re: /Président\s*:/, part: 'Président' },
+      { re: /Conseiller.*annexe\s*:/, part: 'Conseiller' },
+      { re: /Prière\s*:/, part: 'Prière' },
+      { re: /Conducteur\s*:/, part: 'Conducteur (EBA)' },
+      { re: /Lecteur\s*:/, part: 'Lecteur (EBA)' }
+    ];
+    const MOISRE = /(NOVEMBRE|DÉCEMBRE|OCTOBRE|JANVIER|FÉVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOÛT|SEPTEMBRE)/;
+    const semaines = []; let cur = null;
+    for (const it of all) {
+      const estHeader = it.x < 60 && /\|/.test(it.s) && MOISRE.test(it.s);
+      if (estHeader) {
+        // Jour de début = 1er nombre du titre ; mois = 1er mois nommé.
+        // Gère « 02-08 NOVEMBRE » comme « 30 NOVEMBRE – 06 DÉCEMBRE ».
+        const m = it.s.match(/^\s*(\d{1,2})/);
+        const moisNom = (it.s.match(MOISRE) || [])[1];
+        cur = { header: it.s, jourDebut: m ? parseInt(m[1], 10) : null, mois: VCM_MOIS[moisNom] || mois, items: [], noms: [] };
+        semaines.push(cur); continue;
+      }
+      if (cur) cur.items.push(it);
+    }
+    for (const sem of semaines) {
+      const map = new Map(); // nom -> Set(parts)
+      const add = (nom, part) => { if (!map.has(nom)) map.set(nom, new Set()); map.get(nom).add(part); };
+      for (const it of sem.items) {
+        for (const lab of LABELS) {
+          if (lab.re.test(it.s)) {
+            const cand = sem.items.filter((n) => n.p === it.p && Math.abs(n.y - it.y) <= 3 && n.x >= 440 && vcmEstNom(n.s));
+            for (const c of cand) add(vcmEstNom(c.s), lab.part);
+          }
+        }
+      }
+      for (const it of sem.items) {
+        if (it.x < 330) continue;
+        const nom = vcmEstNom(it.s);
+        if (!nom) continue;
+        const ligne = sem.items.filter((n) => n.p === it.p && Math.abs(n.y - it.y) <= 3 && n.x < 300).map((n) => n.s).join(' ');
+        let part = 'Participation';
+        const mp = ligne.match(/\d+\.\s*([^()]+?)(?:\s*\(|$)/);
+        if (mp) part = mp[1].trim();
+        else if (/Lecture de la Bible/i.test(ligne)) part = 'Lecture de la Bible';
+        add(nom, part);
+      }
+      sem.noms = [...map.entries()].map(([nom, parts]) => {
+        const arr = [...parts];
+        const utile = arr.filter((p) => p !== 'Participation');
+        return { nom, part: (utile[0] || arr[0] || 'Participation') };
+      });
+    }
+    return { titre, mois, annee, semaines };
+  }
+
+  function vcmMardi(jourDebut, mois, annee) {
+    if (!jourDebut || !mois) return null;
+    for (let k = 0; k < 7; k++) {
+      const d = new Date(annee, mois - 1, jourDebut + k);
+      if (d.getDay() === 2) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+    }
+    return null;
+  }
+
+  function vcmMatch(nomVcm) {
+    const toks = nomVcm.replace(/\s*\/\s*$/, '').trim().split(/\s+/);
+    if (toks.length < 2) return { statut: 'inc', candidats: [] };
+    const last = toks[toks.length - 1];
+    const surname = toks.slice(0, -1).join(' ');
+    const surnameInitial = surname[0] || '';
+    const nn = vcmNormal;
+    const infos = membres.map((m) => {
+      const mtk = m.nom.trim().split(/\s+/);
+      return { id: m.id, given: mtk[0] || '', surInit: (mtk[mtk.length - 1] || '')[0] || '' };
+    });
+    if (/^[A-ZÀ-Ö][a-zà-ÿ]/.test(last)) {
+      // NOM Prénom -> prénom complet + initiale du nom
+      const exact = infos.filter((r) => nn(r.given) === nn(last) && nn(r.surInit) === nn(surnameInitial));
+      if (exact.length === 1) return { statut: 'sur', frereId: exact[0].id, candidats: [exact[0].id] };
+      if (exact.length > 1) return { statut: 'conf', candidats: exact.map((r) => r.id) };
+      return { statut: 'inc', candidats: [] };
+    }
+    if (/^[A-ZÀ-Ö]\.?$/.test(last)) {
+      // NOM Initiale -> initiale prénom + initiale nom : candidats plausibles, incertain
+      const gi = last[0];
+      const cand = infos.filter((r) => nn(r.given[0]) === nn(gi) && nn(r.surInit) === nn(surnameInitial));
+      if (cand.length >= 1) return { statut: 'conf', frereId: cand.length === 1 ? cand[0].id : null, candidats: cand.map((r) => r.id) };
+      return { statut: 'inc', candidats: [] };
+    }
+    return { statut: 'inc', candidats: [] };
+  }
+
+  function vcmFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => { const s = String(r.result || ''); const i = s.indexOf(','); resolve(i >= 0 ? s.slice(i + 1) : s); };
+      r.onerror = () => reject(new Error('Lecture du fichier impossible.'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function vcmLancerImport(file) {
+    if (!window.pdfjsLib) { alert('Le lecteur PDF n\'est pas chargé. Vérifie ta connexion et réessaie.'); return; }
+    if (!membres.length) { try { await chargerMembres(); } catch (e) {} }
+    $('vcm-info').textContent = 'Lecture du PDF…';
+    let parsed, pdfBase64;
+    try {
+      const buf = await file.arrayBuffer();
+      pdfBase64 = await vcmFileToBase64(file);
+      parsed = await vcmParsePdf(buf);
+    } catch (e) {
+      $('vcm-info').textContent = 'Échec de lecture du PDF : ' + e.message;
+      return;
+    }
+    const annee = parsed.annee || anneeActuel;
+    const mois = parsed.mois || moisActuel;
+    const jours = parsed.semaines.map((sem) => {
+      const date = vcmMardi(sem.jourDebut, sem.mois || mois, annee);
+      const lignes = sem.noms.map((n) => {
+        const mm = vcmMatch(n.nom);
+        return { nomVcm: n.nom, part: n.part, frereId: mm.frereId || null, statut: mm.statut, candidats: mm.candidats || [] };
+      });
+      return { date, header: sem.header, lignes };
+    });
+    vcmRevueData = { annee, mois, filename: file.name, pdfBase64, jours };
+    vcmRenderRevue();
+  }
+
+  function vcmRenderRevue() {
+    const box = $('vcm-revue'); box.innerHTML = '';
+    const d = vcmRevueData;
+    let nSur = 0, nConf = 0, nInc = 0;
+    d.jours.forEach((jr) => jr.lignes.forEach((l) => { if (l.statut === 'sur') nSur++; else if (l.statut === 'conf') nConf++; else nInc++; }));
+    const entete = document.createElement('p');
+    entete.style.cssText = 'font-size:.85rem;margin:0 0 10px';
+    entete.innerHTML = '<b>' + (d.filename || 'PDF') + '</b> — ' + MOIS_NOMS[d.mois] + ' ' + d.annee +
+      '. Vérifie les correspondances, corrige si besoin, puis enregistre. Les lignes « Ignorer » ne sont pas enregistrées.<br>' +
+      '<span class="vcm-chip sur">sûr : ' + nSur + '</span> ' +
+      '<span class="vcm-chip conf">à confirmer : ' + nConf + '</span> ' +
+      '<span class="vcm-chip inc">inconnu : ' + nInc + '</span>';
+    box.appendChild(entete);
+
+    d.jours.forEach((jr) => {
+      const sec = document.createElement('div'); sec.className = 'vcm-jour';
+      const h4 = document.createElement('h4');
+      h4.textContent = jr.header + (jr.date ? '  →  mardi ' + jr.date : '  →  ⚠ aucune réunion à cette date (sera ignoré)');
+      sec.appendChild(h4);
+      jr.lignes.forEach((lg) => {
+        const row = document.createElement('div'); row.className = 'vcm-ligne';
+        const c1 = document.createElement('div');
+        const nomSpan = document.createElement('span'); nomSpan.className = 'nomvcm'; nomSpan.textContent = lg.nomVcm;
+        const partSpan = document.createElement('span'); partSpan.className = 'partvcm'; partSpan.textContent = lg.part || '';
+        c1.appendChild(nomSpan); c1.appendChild(document.createElement('br')); c1.appendChild(partSpan);
+
+        const sel = document.createElement('select');
+        const optIgnore = document.createElement('option'); optIgnore.value = ''; optIgnore.textContent = '— Ignorer —'; sel.appendChild(optIgnore);
+        membres.forEach((m) => {
+          const o = document.createElement('option'); o.value = m.id;
+          o.textContent = m.nom + (lg.candidats.includes(m.id) ? ' ◀ candidat' : '');
+          if (lg.frereId === m.id) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', () => { lg.frereId = sel.value ? parseInt(sel.value, 10) : null; });
+
+        const chip = document.createElement('span');
+        chip.className = 'vcm-chip ' + (lg.statut === 'sur' ? 'sur' : (lg.statut === 'conf' ? 'conf' : 'inc'));
+        chip.textContent = lg.statut === 'sur' ? 'sûr' : (lg.statut === 'conf' ? 'à confirmer' : 'inconnu');
+
+        row.appendChild(c1); row.appendChild(sel); row.appendChild(chip);
+        sec.appendChild(row);
+      });
+      box.appendChild(sec);
+    });
+
+    const actions = document.createElement('div'); actions.className = 'vcm-barre'; actions.style.marginTop = '14px';
+    const bsave = document.createElement('button'); bsave.textContent = '💾 Enregistrer l\'import';
+    bsave.addEventListener('click', vcmEnregistrer);
+    const bcancel = document.createElement('button'); bcancel.textContent = 'Annuler'; bcancel.className = 'secondaire';
+    bcancel.addEventListener('click', () => { vcmRevueData = null; box.classList.add('cache'); box.innerHTML = ''; $('vcm-info').textContent = ''; });
+    actions.appendChild(bsave); actions.appendChild(bcancel);
+    box.appendChild(actions);
+    box.classList.remove('cache');
+  }
+
+  async function vcmEnregistrer() {
+    const d = vcmRevueData; if (!d) return;
+    const participations = [];
+    d.jours.forEach((jr) => { if (!jr.date) return; jr.lignes.forEach((lg) => { if (lg.frereId) participations.push({ date: jr.date, frereId: lg.frereId, nomVcm: lg.nomVcm, part: lg.part }); }); });
+    if (participations.length === 0 && !confirm('Aucune correspondance sélectionnée. Enregistrer quand même le PDF (sans participations) ?')) return;
+    try {
+      const res = await appel('/api/admin/programme', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'vcm-import', annee: d.annee, mois: d.mois, filename: d.filename, pdfBase64: d.pdfBase64, participations })
+      });
+      $('vcm-info').textContent = res.inseres + ' participation(s) enregistrée(s) sur ' + res.datesResolues + '/' + res.datesTotal + ' dates.';
+      vcmRevueData = null; $('vcm-revue').classList.add('cache'); $('vcm-revue').innerHTML = '';
+      await chargerProgramme();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function vcmMajBoutonVoir() {
+    try {
+      const res = await appel('/api/admin/programme?vcm_pdf=1&annee=' + anneeActuel + '&mois=' + moisActuel);
+      $('vcm-voir').classList.toggle('cache', !res.exists);
+    } catch (e) { /* silencieux */ }
+  }
+
+  async function vcmVoirPdf() {
+    try {
+      const res = await appel('/api/admin/programme?vcm_pdf=1&annee=' + anneeActuel + '&mois=' + moisActuel);
+      if (!res.exists) { alert('Aucun PDF VCM enregistré pour ce mois.'); return; }
+      const bytes = Uint8Array.from(atob(res.pdfBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const f = $('pdf-modal-frame');
+      if (f.src && f.src.startsWith('blob:')) { try { URL.revokeObjectURL(f.src); } catch (e) {} }
+      f.src = url;
+      $('pdf-modal-titre').textContent = res.filename || 'PDF VCM';
+      $('pdf-modal').classList.remove('cache');
+    } catch (err) { alert(err.message); }
+  }
+
+  function vcmFermerModal() {
+    $('pdf-modal').classList.add('cache');
+    const f = $('pdf-modal-frame');
+    if (f.src && f.src.startsWith('blob:')) { try { URL.revokeObjectURL(f.src); } catch (e) {} }
+    f.src = 'about:blank';
+  }
+
+  $('vcm-importer').addEventListener('click', () => $('vcm-file').click());
+  $('vcm-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) vcmLancerImport(f); e.target.value = ''; });
+  $('vcm-voir').addEventListener('click', vcmVoirPdf);
+  $('pdf-modal-fermer').addEventListener('click', vcmFermerModal);
+  $('pdf-modal').addEventListener('click', (e) => { if (e.target.id === 'pdf-modal') vcmFermerModal(); });
+
   function renderProgramme() {
     const conteneur = $('liste-reunions');
     conteneur.innerHTML = '';
@@ -723,6 +1049,24 @@
 
       const disposParFrere = new Map();
       reunion.disponibilites.forEach((d) => disposParFrere.set(d.frereId, d));
+
+      // Participations VCM : frères déjà pris ce soir-là (orange).
+      const vcmBusy = new Map();
+      (reunion.vcm || []).forEach((v) => {
+        const prec = vcmBusy.get(v.frereId);
+        const detail = v.part ? v.part : 'participation';
+        vcmBusy.set(v.frereId, prec ? prec + ', ' + detail : detail);
+      });
+      if (vcmBusy.size > 0) {
+        const note = document.createElement('div');
+        note.className = 'vcm-note';
+        const nomDe = (id) => (membres.find((m) => m.id === id) || {}).nom || ('#' + id);
+        const liste = [...vcmBusy.entries()]
+          .map(([id, part]) => '<b>' + nomDe(id) + '</b> (' + part + ')')
+          .join(' · ');
+        note.innerHTML = '<span class="vcm-dot">🟠</span> Déjà au VCM ce soir : ' + liste;
+        bloc.appendChild(note);
+      }
 
       reunion.slots.forEach((slot) => {
         const ligne = document.createElement('div');
@@ -747,6 +1091,10 @@
           const etatTxt = d ? ETAT_LABEL[d.etat] + (d.nature ? ' — ' + d.nature : '') : 'Sans réponse';
           opt.textContent = m.nom + ' (' + etatTxt + ')';
           if (d && d.etat === 'indispo') opt.textContent += ' ⚠';
+          if (vcmBusy.has(m.id)) {
+            opt.textContent = '🟠 ' + opt.textContent + ' — VCM : ' + vcmBusy.get(m.id);
+            opt.className = 'vcm-busy';
+          }
           if (slot.frereId === m.id) opt.selected = true;
           select.appendChild(opt);
         });

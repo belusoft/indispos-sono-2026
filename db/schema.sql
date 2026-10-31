@@ -98,3 +98,28 @@ INSERT INTO roles (nom, ordre) VALUES
   ('Accueil - Ouverture', 8),
   ('Accueil - Auditorium', 9)
 ON CONFLICT (nom) DO NOTHING;
+
+-- ============================================================
+-- Import du programme VCM (Lot 2) : PDF mensuel + participations
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS vcm_documents (
+  annee INT NOT NULL,
+  mois INT NOT NULL,
+  filename TEXT,
+  pdf_base64 TEXT NOT NULL,
+  uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (annee, mois)
+);
+
+CREATE TABLE IF NOT EXISTS vcm_participations (
+  id SERIAL PRIMARY KEY,
+  reunion_id INT NOT NULL REFERENCES reunions(id) ON DELETE CASCADE,
+  frere_id INT REFERENCES freres(id) ON DELETE CASCADE,
+  nom_vcm TEXT NOT NULL,
+  part TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_vcm_part_reunion ON vcm_participations(reunion_id);
+CREATE INDEX IF NOT EXISTS idx_vcm_part_frere ON vcm_participations(frere_id);
