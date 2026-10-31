@@ -12,6 +12,26 @@ module.exports = async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
 
   if (req.method === 'GET') {
+    // Sous-route : liste des périodes (année/mois) présentes en base,
+    // pour alimenter le sélecteur mois/année sans ajouter de fonction serverless.
+    if (req.query.periodes != null) {
+      try {
+        const rows = await sql`
+          SELECT DISTINCT
+            EXTRACT(YEAR FROM date_reunion)::int  AS annee,
+            EXTRACT(MONTH FROM date_reunion)::int AS mois
+          FROM reunions
+          ORDER BY annee ASC, mois ASC
+        `;
+        const periodes = rows.map((r) => ({ annee: r.annee, mois: r.mois }));
+        const annees = [...new Set(periodes.map((p) => p.annee))].sort((a, b) => a - b);
+        res.status(200).json({ ok: true, periodes, annees });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: 'Erreur lors de la récupération des périodes.' });
+      }
+      return;
+    }
+
     const mois = parseInt(req.query.mois, 10);
 
     if (!Number.isInteger(mois) || mois < 1 || mois > 12) {
@@ -107,6 +127,41 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    // Sous-route : génération des réunions (mardis + samedis) d'une année complète.
+    // Idempotent (ON CONFLICT DO NOTHING). Évite une fonction serverless dédiée.
+    if (req.body && req.body.action === 'generer-reunions') {
+      const annee = parseInt(req.body.annee, 10);
+      if (!Number.isInteger(annee) || annee < 2026 || annee > 2100) {
+        res.status(400).json({ ok: false, error: 'Paramètre "annee" invalide (2026 à 2100 attendu).' });
+        return;
+      }
+      const debut = `${annee}-01-01`;
+      const fin = `${annee}-12-31`;
+      try {
+        const inseres = await sql`
+          INSERT INTO reunions (date_reunion, libelle)
+          SELECT
+            d::date,
+            CASE EXTRACT(DOW FROM d) WHEN 2 THEN 'mardi ' WHEN 6 THEN 'samedi ' END ||
+            EXTRACT(DAY FROM d)::int || ' ' ||
+            CASE EXTRACT(MONTH FROM d)
+              WHEN 1 THEN 'janvier'  WHEN 2 THEN 'février'   WHEN 3 THEN 'mars'
+              WHEN 4 THEN 'avril'    WHEN 5 THEN 'mai'       WHEN 6 THEN 'juin'
+              WHEN 7 THEN 'juillet'  WHEN 8 THEN 'août'      WHEN 9 THEN 'septembre'
+              WHEN 10 THEN 'octobre' WHEN 11 THEN 'novembre' WHEN 12 THEN 'décembre'
+            END
+          FROM generate_series(${debut}::date, ${fin}::date, '1 day'::interval) AS d
+          WHERE EXTRACT(DOW FROM d) IN (2, 6)
+          ON CONFLICT (date_reunion) DO NOTHING
+          RETURNING id
+        `;
+        res.status(200).json({ ok: true, annee, inseres: inseres.length });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: 'Erreur lors de la génération des réunions.' });
+      }
+      return;
+    }
+
     const { reunionId, roleId, frereId } = req.body || {};
 
     if (!Number.isInteger(reunionId) || reunionId <= 0) {

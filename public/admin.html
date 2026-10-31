@@ -552,7 +552,7 @@
 
   async function chargerPeriodes() {
     try {
-      const data = await appel('/api/admin/periodes');
+      const data = await appel('/api/admin/programme?periodes=1');
       periodesDispo = data.periodes || [];
     } catch (err) {
       periodesDispo = [];
@@ -698,9 +698,9 @@
 
   async function genererAnnee(annee) {
     try {
-      const data = await appel('/api/admin/generer-reunions', {
+      const data = await appel('/api/admin/programme', {
         method: 'POST',
-        body: JSON.stringify({ annee })
+        body: JSON.stringify({ action: 'generer-reunions', annee })
       });
       alert(data.inseres + ' réunion(s) créée(s) pour ' + annee + '.');
       await chargerProgramme();
