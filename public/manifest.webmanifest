@@ -1,7 +1,7 @@
 {
-  "name": "Mes Indispos — Sono & Accueil 2026",
-  "short_name": "Mes Indispos",
-  "description": "Saisie des disponibilités pour les réunions Sono & Accueil 2026",
+  "name": "Indispo Sono",
+  "short_name": "Indispo Sono",
+  "description": "Saisie des disponibilités pour les réunions Sono & Accueil",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mes Indispos — Sono & Accueil 2026</title>
-<meta name="description" content="Saisie des disponibilités pour les réunions Sono & Accueil 2026">
+<title>Indispo Sono</title>
+<meta name="description" content="Saisie des disponibilités pour les réunions Sono & Accueil">
 <meta name="theme-color" content="#6366f1">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mes Indispos">
+<meta name="apple-mobile-web-app-title" content="Indispo Sono">
 <style>
   :root {
     --primaire: #6366f1;
@@ -358,10 +358,10 @@
 
   <!-- Écran 1 : Accueil -->
   <section class="ecran actif" id="ecran-accueil">
-    <h1>Mes Indispos</h1>
-    <p class="sous-titre">Sono &amp; Accueil — 2026</p>
+    <h1>Indispo Sono</h1>
+    <p class="sous-titre">Sono &amp; Accueil</p>
     <div class="carte">
-      <p class="description">Renseigne tes disponibilités pour les réunions du mardi et du samedi, de mai à décembre 2026.</p>
+      <p class="description">Renseigne tes disponibilités pour les réunions du mardi et du samedi.</p>
       <div class="barre-actions">
         <button class="btn-primaire" id="btn-commencer">Commencer</button>
         <button class="btn-secondaire" id="btn-effacer-accueil">Effacer mes données locales</button>
@@ -452,6 +452,9 @@ const CLE_FRERE = 'mi_frere_id';
 const CLE_NOM = 'mi_frere_nom';
 const CLE_DONNEES = 'mi_donnees'; // { [mois]: { [reunionId]: { etat, nature, date, libelle } } }
 
+// Année de saisie : suit l'année civile en cours (la base doit contenir
+// les réunions de cette année — voir l'onglet Programme de l'admin).
+const ANNEE_SAISIE = new Date().getFullYear();
 let freresDisponibles = [];
 let frereSelectionne = null; // { id, nom }
 let moisCourant = null;
@@ -563,8 +566,8 @@ function estMoisPasse(numMois) {
   const maintenant = new Date();
   const anneeActuelle = maintenant.getFullYear();
   const moisActuel = maintenant.getMonth() + 1; // 1-12
-  if (anneeActuelle > 2026) return true;
-  if (anneeActuelle < 2026) return false;
+  if (anneeActuelle > ANNEE_SAISIE) return true;
+  if (anneeActuelle < ANNEE_SAISIE) return false;
   return numMois < moisActuel;
 }
 
@@ -615,13 +618,13 @@ document.getElementById('btn-retour-mois').addEventListener('click', () => {
 
 // ===== Écran saisie =====
 async function chargerReunionsMois(numeroMois, nomMois) {
-  document.getElementById('titre-mois-saisie').textContent = nomMois + ' 2026';
+  document.getElementById('titre-mois-saisie').textContent = nomMois + ' ' + ANNEE_SAISIE;
   const conteneur = document.getElementById('liste-reunions');
   conteneur.innerHTML = '<p class="vide">Chargement…</p>';
   document.getElementById('erreur-saisie').classList.remove('visible');
 
   try {
-    const reponse = await fetch('/api/reunions?mois=' + numeroMois);
+    const reponse = await fetch('/api/reunions?mois=' + numeroMois + '&annee=' + ANNEE_SAISIE);
     const data = await reponse.json();
     if (!data.ok) throw new Error(data.error || 'Erreur inconnue');
     reunionsMoisCourant = data.reunions;
@@ -796,7 +799,7 @@ function afficherRecapitulatif() {
     const bloc = document.createElement('div');
     bloc.className = 'recap-mois';
     const titre = document.createElement('h3');
-    titre.textContent = nomMois + ' 2026';
+    titre.textContent = nomMois + ' ' + ANNEE_SAISIE;
     bloc.appendChild(titre);
 
     Object.keys(donnees[numMois]).forEach((reunionId) => {

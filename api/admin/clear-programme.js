@@ -22,6 +22,12 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  const annee = req.body?.annee != null ? parseInt(req.body.annee, 10) : null;
+  if (annee != null && (!Number.isInteger(annee) || annee < 2026 || annee > 2100)) {
+    res.status(400).json({ ok: false, error: 'Paramètre "annee" invalide.' });
+    return;
+  }
+
   if (req.body?.reunionId != null && !Number.isInteger(reunionId)) {
     res.status(400).json({ ok: false, error: 'Paramètre "reunionId" invalide.' });
     return;
@@ -30,9 +36,15 @@ module.exports = async function handler(req, res) {
   try {
     const sql = neon(process.env.DATABASE_URL);
 
-    const reunions = await sql`
-      SELECT id FROM reunions WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
-    `;
+    const reunions = annee != null
+      ? await sql`
+          SELECT id FROM reunions
+          WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+            AND EXTRACT(YEAR FROM date_reunion) = ${annee}
+        `
+      : await sql`
+          SELECT id FROM reunions WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+        `;
     const idsDuMois = new Set(reunions.map((r) => r.id));
 
     if (reunionId !== null) {

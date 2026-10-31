@@ -19,13 +19,27 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    const annee = req.query.annee != null ? parseInt(req.query.annee, 10) : null;
+    if (annee != null && (!Number.isInteger(annee) || annee < 2026 || annee > 2100)) {
+      res.status(400).json({ ok: false, error: 'Paramètre "annee" invalide.' });
+      return;
+    }
+
     try {
-      const reunions = await sql`
-        SELECT id, date_reunion::text AS date, libelle
-        FROM reunions
-        WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
-        ORDER BY date_reunion ASC
-      `;
+      const reunions = annee != null
+        ? await sql`
+            SELECT id, date_reunion::text AS date, libelle
+            FROM reunions
+            WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+              AND EXTRACT(YEAR FROM date_reunion) = ${annee}
+            ORDER BY date_reunion ASC
+          `
+        : await sql`
+            SELECT id, date_reunion::text AS date, libelle
+            FROM reunions
+            WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+            ORDER BY date_reunion ASC
+          `;
 
       const roles = await sql`SELECT id, nom, ordre FROM roles ORDER BY ordre ASC`;
 

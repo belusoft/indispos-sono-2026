@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Administration — Sono &amp; Accueil 2026</title>
+<title>Administration — Indispo Sono</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -82,9 +82,15 @@
     font-size: 0.8rem; cursor: pointer; user-select: none;
   }
   .chip.actif { background: var(--primaire); color: #fff; border-color: var(--primaire); }
+  .periode-select { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .periode-select label { font-size: 0.85rem; font-weight: 600; color: var(--texte-clair); }
+  .annee-select { padding: 7px 10px; font-size: 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: var(--texte); }
   .mois-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
   .mois-select button { flex: 0 0 auto; background: #e5e7eb; color: var(--texte); padding: 8px 14px; font-size: 0.85rem; }
   .mois-select button.actif { background: var(--primaire); color: #fff; }
+  .mois-select button.vide { opacity: 0.55; }
+  .prog-empty { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .prog-empty p { margin: 0 0 10px; font-size: 0.9rem; color: #9a3412; }
   .reunion-bloc { border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
   .reunion-bloc h3 { margin: 0 0 10px; font-size: 1rem; }
   .slot-ligne { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -179,7 +185,7 @@
 
 <header>
   <h1>Administration</h1>
-  <p>Sono &amp; Accueil — 2026</p>
+  <p>Indispo Sono — Sono &amp; Accueil</p>
 </header>
 
 <div class="wrap">
@@ -230,7 +236,12 @@
     <!-- Programme -->
     <div id="vue-programme" class="carte cache">
       <h2>Programme du mois</h2>
+      <div class="periode-select">
+        <label for="annee-select">Année</label>
+        <select id="annee-select" class="annee-select"></select>
+      </div>
       <div class="mois-select" id="mois-select"></div>
+      <div class="prog-empty cache" id="prog-empty"></div>
       <div class="barre-actions">
         <button id="btn-auto-vide">Auto-attribuer (cases vides)</button>
         <button id="btn-auto-tout" class="secondaire">Régénérer tout le mois</button>
@@ -284,7 +295,10 @@
   let token = localStorage.getItem('mi_admin_token') || null;
   let roles = [];
   let membres = [];
-  let moisActuel = 5; // mois partagé entre les onglets Suivi et Programme
+  const _now = new Date();
+  let anneeActuel = _now.getFullYear();           // année de l'onglet Programme
+  let moisActuel = _now.getMonth() + 1;           // mois partagé Suivi / Programme (1-12)
+  let periodesDispo = [];                          // [{ annee, mois }] présents en base
 
   const $ = (id) => document.getElementById(id);
 
@@ -536,13 +550,47 @@
     panel.appendChild(barre);
   }
 
+  async function chargerPeriodes() {
+    try {
+      const data = await appel('/api/admin/periodes');
+      periodesDispo = data.periodes || [];
+    } catch (err) {
+      periodesDispo = [];
+    }
+  }
+
+  function moisADesReunions(annee, mois) {
+    return periodesDispo.some((p) => p.annee === annee && p.mois === mois);
+  }
+
+  function renderAnneeSelect() {
+    const sel = $('annee-select');
+    const anneesData = periodesDispo.map((p) => p.annee);
+    const plancher = _now.getFullYear();
+    const annees = new Set(anneesData);
+    for (let a = 2026; a <= Math.max(plancher + 1, 2030); a++) annees.add(a);
+    annees.add(anneeActuel);
+    const liste = [...annees].sort((a, b) => a - b);
+    sel.innerHTML = '';
+    liste.forEach((a) => {
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.textContent = a;
+      if (a === anneeActuel) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
   function renderMoisSelect() {
     const conteneur = $('mois-select');
     conteneur.innerHTML = '';
-    for (let m = 5; m <= 12; m++) {
+    for (let m = 1; m <= 12; m++) {
       const btn = document.createElement('button');
       btn.textContent = MOIS_NOMS[m];
-      btn.className = m === moisActuel ? 'actif' : '';
+      const classes = [];
+      if (m === moisActuel) classes.push('actif');
+      if (!moisADesReunions(anneeActuel, m)) classes.push('vide');
+      btn.className = classes.join(' ');
       btn.addEventListener('click', () => { moisActuel = m; chargerProgramme(); });
       conteneur.appendChild(btn);
     }
@@ -621,11 +669,44 @@
   let programmeData = { reunions: [], roles: [] };
 
   async function chargerProgramme() {
+    await chargerPeriodes();
+    renderAnneeSelect();
     renderMoisSelect();
     $('auto-resultat').classList.add('cache');
-    const data = await appel('/api/admin/programme?mois=' + moisActuel);
+    const data = await appel('/api/admin/programme?mois=' + moisActuel + '&annee=' + anneeActuel);
     programmeData = data;
     renderProgramme();
+    majEtatVide();
+  }
+
+  function majEtatVide() {
+    const box = $('prog-empty');
+    if (programmeData.reunions && programmeData.reunions.length > 0) {
+      box.classList.add('cache');
+      box.innerHTML = '';
+      return;
+    }
+    box.innerHTML =
+      '<p>Aucune réunion pour ' + MOIS_NOMS[moisActuel] + ' ' + anneeActuel +
+      '. Génère les réunions (mardis + samedis) de l\'année ' + anneeActuel + ' pour pouvoir attribuer les services.</p>';
+    const btn = document.createElement('button');
+    btn.textContent = '📅 Générer les réunions de ' + anneeActuel;
+    btn.addEventListener('click', () => genererAnnee(anneeActuel));
+    box.appendChild(btn);
+    box.classList.remove('cache');
+  }
+
+  async function genererAnnee(annee) {
+    try {
+      const data = await appel('/api/admin/generer-reunions', {
+        method: 'POST',
+        body: JSON.stringify({ annee })
+      });
+      alert(data.inseres + ' réunion(s) créée(s) pour ' + annee + '.');
+      await chargerProgramme();
+    } catch (err) {
+      alert(err.message);
+    }
   }
 
   function renderProgramme() {
@@ -699,7 +780,7 @@
     try {
       const data = await appel('/api/admin/auto-assign', {
         method: 'POST',
-        body: JSON.stringify({ mois: moisActuel, overwrite })
+        body: JSON.stringify({ mois: moisActuel, annee: anneeActuel, overwrite })
       });
       const resEl = $('auto-resultat');
       resEl.textContent = data.remplis + ' / ' + data.totalSlots + ' rôles attribués pour ' + MOIS_NOMS[moisActuel] + '.';
@@ -762,6 +843,11 @@
     sel.classList.toggle('cache', $('pub-scope').value === 'mois');
   }
 
+  $('annee-select').addEventListener('change', (e) => {
+    anneeActuel = parseInt(e.target.value, 10);
+    chargerProgramme();
+  });
+
   $('pub-scope').addEventListener('change', () => {
     $('pub-date').classList.toggle('cache', $('pub-scope').value === 'mois');
   });
@@ -780,7 +866,7 @@
   }
 
   function construireTitrePublication(reunions, scope) {
-    if (scope === 'mois') return 'Programme — ' + MOIS_NOMS[moisActuel] + ' 2026';
+    if (scope === 'mois') return 'Programme — ' + MOIS_NOMS[moisActuel] + ' ' + anneeActuel;
     if (scope === 'jour') return 'Programme — ' + capitalise((reunions[0] && reunions[0].libelle) || '');
     if (reunions.length === 0) return 'Programme — semaine';
     const dates = reunions.map((r) => r.date).sort();
@@ -959,7 +1045,7 @@
 
   $('btn-effacer-confirmer').addEventListener('click', async () => {
     const scope = $('effacer-scope').value;
-    const corps = { mois: moisActuel };
+    const corps = { mois: moisActuel, annee: anneeActuel };
     let messageConfirmation = 'Effacer toutes les attributions de ' + MOIS_NOMS[moisActuel] + ' ? Cette action est irréversible.';
 
     if (scope === 'jour') {

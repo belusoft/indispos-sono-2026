@@ -1,4 +1,4 @@
-# Mes Indispos — Sono & Accueil 2026
+# Indispo Sono — Sono & Accueil
 
 PWA légère (HTML/CSS/JS vanilla) + Vercel Serverless Functions + Neon Postgres, pour recueillir les disponibilités des frères de l'équipe Sono & Accueil aux réunions du mardi et du samedi, de mai à décembre 2026.
 

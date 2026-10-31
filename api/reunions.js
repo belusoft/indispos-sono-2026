@@ -18,14 +18,28 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  const annee = req.query.annee != null ? parseInt(req.query.annee, 10) : null;
+  if (annee != null && (!Number.isInteger(annee) || annee < 2026 || annee > 2100)) {
+    res.status(400).json({ ok: false, error: 'Paramètre "annee" invalide.' });
+    return;
+  }
+
   try {
     const sql = neon(process.env.DATABASE_URL);
-    const rows = await sql`
-      SELECT id, date_reunion::text AS date_reunion, libelle
-      FROM reunions
-      WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
-      ORDER BY date_reunion ASC
-    `;
+    const rows = annee != null
+      ? await sql`
+          SELECT id, date_reunion::text AS date_reunion, libelle
+          FROM reunions
+          WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+            AND EXTRACT(YEAR FROM date_reunion) = ${annee}
+          ORDER BY date_reunion ASC
+        `
+      : await sql`
+          SELECT id, date_reunion::text AS date_reunion, libelle
+          FROM reunions
+          WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+          ORDER BY date_reunion ASC
+        `;
 
     const reunions = rows.map((r) => ({
       id: r.id,

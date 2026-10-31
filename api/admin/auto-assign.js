@@ -30,15 +30,29 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  const annee = req.body?.annee != null ? parseInt(req.body.annee, 10) : null;
+  if (annee != null && (!Number.isInteger(annee) || annee < 2026 || annee > 2100)) {
+    res.status(400).json({ ok: false, error: 'Paramètre "annee" invalide.' });
+    return;
+  }
+
   try {
     const sql = neon(process.env.DATABASE_URL);
 
-    const reunions = await sql`
-      SELECT id, date_reunion::text AS date, libelle
-      FROM reunions
-      WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
-      ORDER BY date_reunion ASC
-    `;
+    const reunions = annee != null
+      ? await sql`
+          SELECT id, date_reunion::text AS date, libelle
+          FROM reunions
+          WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+            AND EXTRACT(YEAR FROM date_reunion) = ${annee}
+          ORDER BY date_reunion ASC
+        `
+      : await sql`
+          SELECT id, date_reunion::text AS date, libelle
+          FROM reunions
+          WHERE EXTRACT(MONTH FROM date_reunion) = ${mois}
+          ORDER BY date_reunion ASC
+        `;
 
     if (reunions.length === 0) {
       res.status(200).json({ ok: true, totalSlots: 0, remplis: 0, details: [] });
