@@ -171,6 +171,11 @@
   .modal-tete { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; }
   .modal-tete h3 { margin: 0; font-size: 0.95rem; }
   .modal-box iframe { flex: 1; width: 100%; border: 0; }
+  .panel-ajout { background: #eef2ff; border: 2px solid var(--primaire); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .panel-ajout .ligne { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .panel-ajout input { flex: 1; min-width: 140px; margin-bottom: 0; }
+  .panel-ajout .erreur { margin: 8px 0 0; }
+  .panel-ajout .ligne:last-child { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -203,6 +208,19 @@
     <div id="vue-membres" class="carte">
       <h2>Membres et rôles</h2>
       <p class="resume">Coche les rôles que chaque frère peut assurer. Enregistrement immédiat par frère.</p>
+      <button id="btn-ajouter-frere" style="margin: 8px 0 12px;">➕ Ajouter un frère</button>
+      <div id="form-ajout-frere" class="panel-ajout cache">
+        <p class="resume" style="margin: 0 0 8px;">Le frère apparaît tout de suite dans la liste de la page où chacun envoie ses disponibilités.</p>
+        <div class="ligne">
+          <input type="text" id="ajout-prenom" placeholder="Prénom" maxlength="40" autocomplete="off">
+          <input type="text" id="ajout-initiale" placeholder="1re lettre du nom" maxlength="1" autocomplete="off" style="max-width: 170px;">
+        </div>
+        <div id="ajout-erreur" class="erreur cache"></div>
+        <div class="ligne">
+          <button id="btn-ajout-valider">Ajouter</button>
+          <button id="btn-ajout-annuler" class="secondaire">Annuler</button>
+        </div>
+      </div>
       <div id="liste-membres"></div>
     </div>
 
@@ -423,6 +441,56 @@
     }
   }
 
+  function afficherErreurAjout(msg) {
+    const el = $('ajout-erreur');
+    el.textContent = msg;
+    el.classList.toggle('cache', !msg);
+  }
+
+  $('btn-ajouter-frere').addEventListener('click', () => {
+    $('form-ajout-frere').classList.toggle('cache');
+    afficherErreurAjout('');
+    $('ajout-prenom').focus();
+  });
+
+  $('btn-ajout-annuler').addEventListener('click', () => {
+    $('form-ajout-frere').classList.add('cache');
+    $('ajout-prenom').value = '';
+    $('ajout-initiale').value = '';
+    afficherErreurAjout('');
+  });
+
+  $('btn-ajout-valider').addEventListener('click', async () => {
+    const prenom = $('ajout-prenom').value.trim();
+    const initiale = $('ajout-initiale').value.trim();
+    if (!prenom || !initiale) { afficherErreurAjout('Prénom et première lettre du nom requis.'); return; }
+    $('btn-ajout-valider').disabled = true;
+    try {
+      const data = await appel('/api/admin/membres', { method: 'POST', body: JSON.stringify({ prenom, initiale }) });
+      $('ajout-prenom').value = '';
+      $('ajout-initiale').value = '';
+      afficherErreurAjout('');
+      $('form-ajout-frere').classList.add('cache');
+      await chargerMembres();
+      alert(data.membre.nom + ' a été ajouté. Tu peux maintenant lui donner ses rôles.');
+    } catch (err) {
+      afficherErreurAjout(err.message);
+    } finally {
+      $('btn-ajout-valider').disabled = false;
+    }
+  });
+
+  async function supprimerFrere(m) {
+    if (!confirm('Supprimer ' + m.nom + ' ?\n\nSes réponses, ses rôles et ses places dans le programme seront effacés. Irréversible.')) return;
+    try {
+      const data = await appel('/api/admin/membres', { method: 'DELETE', body: JSON.stringify({ frereId: m.id }) });
+      await chargerMembres();
+      alert(data.nom + ' a été supprimé (' + data.reponsesEffacees + ' réponse(s) effacée(s), ' + data.placesLiberees + ' place(s) libérée(s) dans le programme).');
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   async function chargerMembres() {
     const data = await appel('/api/admin/membres');
     membres = data.membres;
@@ -455,6 +523,16 @@
       btnReponses.textContent = '👁️ Réponses';
       btnReponses.addEventListener('click', () => basculerPanelReponses(m.id, panelReponses));
       ligneTitre.appendChild(btnReponses);
+
+      btnReponses.style.marginLeft = 'auto';
+      const btnSuppr = document.createElement('button');
+      btnSuppr.className = 'secondaire';
+      btnSuppr.style.fontSize = '0.78rem';
+      btnSuppr.style.padding = '4px 10px';
+      btnSuppr.style.marginLeft = '6px';
+      btnSuppr.textContent = '🗑️ Supprimer';
+      btnSuppr.addEventListener('click', () => supprimerFrere(m));
+      ligneTitre.appendChild(btnSuppr);
 
       bloc.appendChild(ligneTitre);
 
