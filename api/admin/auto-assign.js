@@ -61,7 +61,11 @@ module.exports = async function handler(req, res) {
 
     const reunionIds = reunions.map((r) => r.id);
 
-    const roles = await sql`SELECT id, nom, ordre FROM roles ORDER BY ordre ASC`;
+    const roles = await sql`SELECT id, nom, ordre, nb_postes FROM roles ORDER BY ordre ASC`;
+    // Un « slot » = un poste d'un rôle (Perches : 2 postes par partie).
+    const slotsParReunion = roles.flatMap((role) =>
+      Array.from({ length: role.nb_postes || 1 }, (_, i) => ({ role, poste: i + 1 }))
+    );
 
     const membreRoles = await sql`SELECT frere_id, role_id FROM membre_roles`;
     const rolesParMembre = new Map(); // role_id -> Set(frere_id)
@@ -92,14 +96,14 @@ module.exports = async function handler(req, res) {
     const incrUsage = (frereId) => usageCount.set(frereId, (usageCount.get(frereId) || 0) + 1);
 
     const existantes = await sql`
-      SELECT reunion_id, role_id, frere_id
+      SELECT reunion_id, role_id, poste, frere_id
       FROM programme
       WHERE reunion_id = ANY(${reunionIds})
     `;
     const existantParReunion = new Map(); // reunion_id -> Map(role_id -> frere_id|null)
     for (const e of existantes) {
       if (!existantParReunion.has(e.reunion_id)) existantParReunion.set(e.reunion_id, new Map());
-      existantParReunion.get(e.reunion_id).set(e.role_id, e.frere_id);
+      existantParReunion.get(e.reunion_id).set(e.role_id + ':' + e.poste, e.frere_id);
     }
 
     let totalSlots = 0;
@@ -116,9 +120,9 @@ module.exports = async function handler(req, res) {
 
       let rolesRemplis = 0;
 
-      for (const role of roles) {
+      for (const { role, poste } of slotsParReunion) {
         totalSlots += 1;
-        const assignationActuelle = existantPourReunion.get(role.id) || null;
+        const assignationActuelle = existantPourReunion.get(role.id + ':' + poste) || null;
 
         if (assignationActuelle && !overwrite) {
           rolesRemplis += 1;
@@ -132,7 +136,7 @@ module.exports = async function handler(req, res) {
         });
 
         if (eligibles.length === 0) {
-          ecritures.push({ reunionId: reunion.id, roleId: role.id, frereId: null });
+          ecritures.push({ reunionId: reunion.id, roleId: role.id, poste, frereId: null });
           continue;
         }
 
@@ -146,7 +150,7 @@ module.exports = async function handler(req, res) {
         });
 
         const choisi = eligibles[0];
-        ecritures.push({ reunionId: reunion.id, roleId: role.id, frereId: choisi });
+        ecritures.push({ reunionId: reunion.id, roleId: role.id, poste, frereId: choisi });
         dejaAffecteCeJour.add(choisi);
         incrUsage(choisi);
         rolesRemplis += 1;
@@ -158,15 +162,15 @@ module.exports = async function handler(req, res) {
         date: reunion.date,
         libelle: reunion.libelle,
         rolesRemplis,
-        totalRoles: roles.length
+        totalRoles: slotsParReunion.length
       });
     }
 
     for (const e of ecritures) {
       await sql`
-        INSERT INTO programme (reunion_id, role_id, frere_id, updated_at)
-        VALUES (${e.reunionId}, ${e.roleId}, ${e.frereId}, now())
-        ON CONFLICT (reunion_id, role_id)
+        INSERT INTO programme (reunion_id, role_id, poste, frere_id, updated_at)
+        VALUES (${e.reunionId}, ${e.roleId}, ${e.poste}, ${e.frereId}, now())
+        ON CONFLICT (reunion_id, role_id, poste)
         DO UPDATE SET frere_id = EXCLUDED.frere_id, updated_at = now()
       `;
     }

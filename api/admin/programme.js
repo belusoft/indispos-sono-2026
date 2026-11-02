@@ -90,7 +90,7 @@ module.exports = async function handler(req, res) {
             ORDER BY date_reunion ASC
           `;
 
-      const roles = await sql`SELECT id, nom, ordre FROM roles ORDER BY ordre ASC`;
+      const roles = await sql`SELECT id, nom, ordre, nb_postes FROM roles ORDER BY ordre ASC`;
 
       const reunionIds = reunions.map((r) => r.id);
       if (reunionIds.length === 0) {
@@ -99,7 +99,7 @@ module.exports = async function handler(req, res) {
       }
 
       const assignations = await sql`
-        SELECT p.reunion_id, p.role_id, p.frere_id, f.nom AS frere_nom
+        SELECT p.reunion_id, p.role_id, p.poste, p.frere_id, f.nom AS frere_nom
         FROM programme p
         LEFT JOIN freres f ON f.id = p.frere_id
         WHERE p.reunion_id = ANY(${reunionIds})
@@ -115,7 +115,7 @@ module.exports = async function handler(req, res) {
       const assignParReunion = new Map();
       for (const a of assignations) {
         if (!assignParReunion.has(a.reunion_id)) assignParReunion.set(a.reunion_id, new Map());
-        assignParReunion.get(a.reunion_id).set(a.role_id, {
+        assignParReunion.get(a.reunion_id).set(a.role_id + ':' + a.poste, {
           frereId: a.frere_id,
           frereNom: a.frere_nom
         });
@@ -153,14 +153,20 @@ module.exports = async function handler(req, res) {
         id: r.id,
         date: r.date,
         libelle: r.libelle,
-        slots: roles.map((role) => {
-          const a = assignParReunion.get(r.id)?.get(role.id);
-          return {
-            roleId: role.id,
-            roleNom: role.nom,
-            frereId: a ? a.frereId : null,
-            frereNom: a ? a.frereNom : null
-          };
+        slots: roles.flatMap((role) => {
+          const nb = role.nb_postes || 1;
+          return Array.from({ length: nb }, (_, i) => {
+            const poste = i + 1;
+            const a = assignParReunion.get(r.id)?.get(role.id + ':' + poste);
+            return {
+              roleId: role.id,
+              roleNom: role.nom,
+              poste,
+              nbPostes: nb,
+              frereId: a ? a.frereId : null,
+              frereNom: a ? a.frereNom : null
+            };
+          });
         }),
         disponibilites: disposParReunion.get(r.id) || [],
         vcm: vcmParReunion.get(r.id) || []
@@ -274,6 +280,7 @@ module.exports = async function handler(req, res) {
     }
 
     const { reunionId, roleId, frereId } = req.body || {};
+    const poste = req.body && req.body.poste != null ? req.body.poste : 1;
 
     if (!Number.isInteger(reunionId) || reunionId <= 0) {
       res.status(400).json({ ok: false, error: 'Paramètre "reunionId" invalide.' });
@@ -283,6 +290,10 @@ module.exports = async function handler(req, res) {
       res.status(400).json({ ok: false, error: 'Paramètre "roleId" invalide.' });
       return;
     }
+    if (!Number.isInteger(poste) || poste < 1 || poste > 10) {
+      res.status(400).json({ ok: false, error: 'Paramètre "poste" invalide.' });
+      return;
+    }
     if (frereId !== null && (!Number.isInteger(frereId) || frereId <= 0)) {
       res.status(400).json({ ok: false, error: 'Paramètre "frereId" invalide.' });
       return;
@@ -290,9 +301,9 @@ module.exports = async function handler(req, res) {
 
     try {
       await sql`
-        INSERT INTO programme (reunion_id, role_id, frere_id, updated_at)
-        VALUES (${reunionId}, ${roleId}, ${frereId}, now())
-        ON CONFLICT (reunion_id, role_id)
+        INSERT INTO programme (reunion_id, role_id, poste, frere_id, updated_at)
+        VALUES (${reunionId}, ${roleId}, ${poste}, ${frereId}, now())
+        ON CONFLICT (reunion_id, role_id, poste)
         DO UPDATE SET frere_id = EXCLUDED.frere_id, updated_at = now()
       `;
       res.status(200).json({ ok: true });

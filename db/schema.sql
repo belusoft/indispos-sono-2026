@@ -60,7 +60,8 @@ ON CONFLICT (date_reunion) DO NOTHING;
 CREATE TABLE IF NOT EXISTS roles (
   id SERIAL PRIMARY KEY,
   nom TEXT NOT NULL UNIQUE,
-  ordre INT NOT NULL DEFAULT 0
+  ordre INT NOT NULL DEFAULT 0,
+  nb_postes INT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS membre_roles (
@@ -74,8 +75,9 @@ CREATE TABLE IF NOT EXISTS programme (
   reunion_id INT NOT NULL REFERENCES reunions(id) ON DELETE CASCADE,
   role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   frere_id INT REFERENCES freres(id) ON DELETE SET NULL,
+  poste INT NOT NULL DEFAULT 1,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (reunion_id, role_id)
+  UNIQUE (reunion_id, role_id, poste)
 );
 
 CREATE TABLE IF NOT EXISTS admin_sessions (
@@ -98,6 +100,9 @@ INSERT INTO roles (nom, ordre) VALUES
   ('Accueil - Ouverture', 8),
   ('Accueil - Auditorium', 9)
 ON CONFLICT (nom) DO NOTHING;
+
+-- Perches : 2 frères par partie (voir db/migration-2-postes-perches.sql pour une base existante).
+UPDATE roles SET nb_postes = 2 WHERE nom IN ('Perches - Partie 1', 'Perches - Partie 2');
 
 -- ============================================================
 -- Import du programme VCM (Lot 2) : PDF mensuel + participations

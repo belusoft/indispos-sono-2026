@@ -108,43 +108,6 @@
   .barre-publication select { width: auto; margin-bottom: 0; flex: 0 0 auto; min-width: 150px; }
   .barre-publication label { font-size: 0.85rem; font-weight: 600; color: var(--texte-clair); }
 
-  /* Document exporté (impression / PDF / JPEG) */
-  .export-doc {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: #fff;
-    color: #111;
-    padding: 24px;
-    width: 760px;
-  }
-  .export-doc h1 {
-    font-size: 1.4rem;
-    margin: 0 0 4px;
-    color: var(--primaire-fonce);
-  }
-  .export-doc .sous-titre {
-    font-size: 0.9rem;
-    color: #555;
-    margin: 0 0 20px;
-  }
-  .export-doc .bloc-reunion {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .export-doc .bloc-reunion h2 {
-    font-size: 1.05rem;
-    margin: 0 0 10px;
-    border-bottom: 2px solid var(--primaire);
-    padding-bottom: 6px;
-  }
-  .export-doc table { width: 100%; border-collapse: collapse; }
-  .export-doc td { padding: 6px 4px; font-size: 0.9rem; border-bottom: 1px solid #eee; }
-  .export-doc td.role { font-weight: 600; width: 55%; }
-  .export-doc td.vide { color: #b91c1c; font-style: italic; }
-
   .tableau-suivi { border-collapse: collapse; white-space: nowrap; }
   .tableau-suivi th, .tableau-suivi td {
     padding: 6px 10px; font-size: 0.8rem; border: 1px solid #eee; text-align: center;
@@ -313,12 +276,21 @@
           <option value="jour">Une date</option>
         </select>
         <select id="pub-date" class="cache"></select>
+        <select id="pub-format" title="Format de la feuille (impression et PDF)">
+          <option value="A4">Feuille A4</option>
+          <option value="A5">Feuille A5</option>
+        </select>
+        <select id="pub-semaines" title="Nombre de semaines par feuille (impression et PDF)">
+          <option value="auto">Semaines par feuille : auto</option>
+          <option value="1">1 semaine par feuille</option>
+          <option value="2">2 semaines par feuille</option>
+        </select>
         <button id="btn-imprimer" class="secondaire">🖨️ Imprimer</button>
         <button id="btn-pdf" class="secondaire">📄 PDF</button>
         <button id="btn-jpeg" class="secondaire">🖼️ JPEG</button>
         <button id="btn-svg" class="secondaire">🔷 SVG</button>
       </div>
-      <p class="resume">Pour « Une semaine », si celle-ci chevauche le mois suivant, seule la partie dans le mois affiché est incluse.</p>
+      <p class="resume">Pour « Une semaine », si celle-ci chevauche le mois suivant, seule la partie dans le mois affiché est incluse. En impression et PDF, une semaine n'est jamais coupée entre deux feuilles : elle passe à la feuille suivante et les feuilles sont équilibrées.</p>
 
       <div id="liste-reunions"></div>
     </div>
@@ -1074,7 +1046,7 @@
 
         const nomRole = document.createElement('span');
         nomRole.className = 'role-nom';
-        nomRole.textContent = slot.roleNom;
+        nomRole.textContent = slot.nbPostes > 1 ? slot.roleNom + ' — frère ' + slot.poste : slot.roleNom;
         ligne.appendChild(nomRole);
 
         const select = document.createElement('select');
@@ -1104,7 +1076,7 @@
           try {
             await appel('/api/admin/programme', {
               method: 'POST',
-              body: JSON.stringify({ reunionId: reunion.id, roleId: slot.roleId, frereId })
+              body: JSON.stringify({ reunionId: reunion.id, roleId: slot.roleId, poste: slot.poste, frereId })
             });
           } catch (err) {
             alert(err.message);
@@ -1151,20 +1123,75 @@
   // ===== Publication (impression / PDF / JPEG / SVG) =====
 
   const STYLE_EXPORT = `
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin:0; padding:0; color:#111; }
-    .export-doc { padding: 24px; width: 760px; }
-    .export-doc h1 { font-size: 1.4rem; margin: 0 0 4px; color: #4f46e5; }
-    .export-doc .sous-titre { font-size: 0.9rem; color: #555; margin: 0 0 20px; }
-    .export-doc .bloc-reunion { border: 1px solid #ccc; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; page-break-inside: avoid; }
-    .export-doc .bloc-reunion h2 { font-size: 1.05rem; margin: 0 0 10px; border-bottom: 2px solid #6366f1; padding-bottom: 6px; }
+    .export-doc { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #fff; color: #111; box-sizing: border-box; }
+    .export-doc *, .export-doc *::before, .export-doc *::after { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .export-doc .tete h1 { font-size: 1.45em; margin: 0 0 0.15em; color: #4f46e5; }
+    .export-doc .tete .sous-titre { font-size: 0.85em; color: #555; margin: 0 0 0.8em; }
+    .export-doc .semaine { margin-bottom: 0.9em; break-inside: avoid; page-break-inside: avoid; }
+    .export-doc .sem-entete { color: #fff; font-weight: 700; font-size: 0.95em; padding: 0.35em 0.7em; border-radius: 0.5em 0.5em 0 0; }
+    .export-doc .bloc-reunion { border: 1px solid #cbd5e1; border-top: none; padding: 0.5em 0.8em 0.6em; }
+    .export-doc .bloc-reunion:last-child { border-radius: 0 0 0.5em 0.5em; }
+    .export-doc .bloc-reunion h2 { font-size: 1.05em; margin: 0 0 0.4em; border-bottom: 2px solid #6366f1; padding-bottom: 0.25em; }
     .export-doc table { width: 100%; border-collapse: collapse; }
-    .export-doc td { padding: 6px 4px; font-size: 0.9rem; border-bottom: 1px solid #eee; }
-    .export-doc td.role { font-weight: 600; width: 55%; }
-    .export-doc td.vide { color: #b91c1c; font-style: italic; }
-    @media print { body { padding: 0; } }
+    .export-doc td { padding: 0.3em 0.5em; font-size: 0.95em; border-bottom: 2px solid #fff; vertical-align: middle; }
+    .export-doc td.role { font-weight: 700; width: 48%; }
+    .export-doc .vide { color: #b91c1c; font-style: italic; }
+    .export-doc.feuille { overflow: hidden; }
   `;
 
+  // Le style du document exporté est aussi injecté dans la page (PDF / JPEG rendus via html2canvas).
+  (function injecterStyleExport() {
+    const st = document.createElement('style');
+    st.textContent = STYLE_EXPORT;
+    document.head.appendChild(st);
+  })();
+
+  // Formats de feuille : dimensions (mm), marge (mm) et taille de police de départ (px).
+  const FORMATS_FEUILLE = {
+    A4: { mm: [210, 297], marge: 10, base: 15 },
+    A5: { mm: [148, 210], marge: 8, base: 11 }
+  };
+  const PX_PAR_MM = 96 / 25.4;
+
+  // Codification couleur : une teinte par service ; la semaine alterne entre
+  // une version claire (semaine « orange ») et une version plus soutenue (semaine « ardoise »).
+  const COULEURS_SERVICES = [
+    ['audio', '#2563eb'],
+    ['video', '#7c3aed'],
+    ['perches - partie 1', '#059669'],
+    ['perches - partie 2', '#65a30d'],
+    ['estrade - tablette', '#dc2626'],
+    ['estrade', '#db2777'],
+    ['admission zoom', '#0891b2'],
+    ['ouverture', '#ca8a04'],
+    ['auditorium', '#92400e']
+  ];
+  const COULEURS_DEFAUT = ['#2563eb', '#7c3aed', '#059669', '#65a30d', '#db2777', '#dc2626', '#0891b2', '#ca8a04', '#92400e'];
+  const SEMAINES_COULEURS = [
+    { entete: '#ea580c', alpha: 0.13 }, // semaine A : orangé, teintes claires
+    { entete: '#475569', alpha: 0.28 }  // semaine B : gris ardoise, teintes soutenues
+  ];
+
   function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function normaliserTexte(s) {
+    return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  function couleurService(nom, index) {
+    const n = normaliserTexte(nom);
+    const trouve = COULEURS_SERVICES.find(([cle]) => n.includes(cle));
+    return trouve ? trouve[1] : COULEURS_DEFAUT[index % COULEURS_DEFAUT.length];
+  }
+
+  function hexRgba(hex, alpha) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + alpha + ')';
+  }
+
+  function echapperHTML(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
   function numeroSemaineISO(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
@@ -1174,9 +1201,58 @@
     return d.getFullYear() + '-S' + semaine;
   }
 
+  function lundiDe(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + (1 - (d.getDay() || 7)));
+    return d;
+  }
+
+  // Parité de la semaine à partir d'un lundi de référence fixe : l'alternance reste
+  // cohérente d'un export à l'autre, même à cheval sur deux années.
+  function pariteSemaine(iso) {
+    const ref = new Date('2026-01-05T00:00:00');
+    const n = Math.round((lundiDe(iso) - ref) / (7 * 86400000));
+    return ((n % 2) + 2) % 2;
+  }
+
   function formatDateCourt(iso) {
     const [, m, j] = iso.split('-');
     return j + '/' + m;
+  }
+
+  function formatDateObj(d) {
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  function grouperParSemaine(reunions) {
+    const map = new Map();
+    reunions.forEach((r) => {
+      const l = lundiDe(r.date);
+      const cle = l.getFullYear() + '-' + (l.getMonth() + 1) + '-' + l.getDate();
+      if (!map.has(cle)) map.set(cle, { lundi: l, parite: pariteSemaine(r.date), reunions: [] });
+      map.get(cle).reunions.push(r);
+    });
+    return [...map.values()].sort((a, b) => a.lundi - b.lundi);
+  }
+
+  function libelleSemaine(sem) {
+    const dimanche = new Date(sem.lundi);
+    dimanche.setDate(dimanche.getDate() + 6);
+    return 'Semaine du ' + formatDateObj(sem.lundi) + ' au ' + formatDateObj(dimanche);
+  }
+
+  // Regroupe les postes d'un même service : Perches 1 et 2 ont chacune deux frères sur une seule ligne.
+  function lignesRoles(reunion) {
+    const lignes = [];
+    const index = new Map();
+    reunion.slots.forEach((s) => {
+      if (!index.has(s.roleId)) {
+        index.set(s.roleId, lignes.length);
+        lignes.push({ roleId: s.roleId, roleNom: s.roleNom, noms: [] });
+      }
+      lignes[index.get(s.roleId)].noms.push(s.frereNom || null);
+    });
+    return lignes;
   }
 
   function remplirSelectDatePublication() {
@@ -1221,19 +1297,113 @@
     return 'Programme — semaine du ' + formatDateCourt(dates[0]) + ' au ' + formatDateCourt(dates[dates.length - 1]);
   }
 
-  function construireHTMLExport(reunions, titre) {
-    let html = '<div class="export-doc"><h1>' + titre + '</h1>' +
-      '<p class="sous-titre">Sono &amp; Accueil — généré le ' + new Date().toLocaleDateString('fr-FR') + '</p>';
-    reunions.forEach((r) => {
-      html += '<div class="bloc-reunion"><h2>' + capitalise(r.libelle) + '</h2><table>';
-      r.slots.forEach((s) => {
-        const nom = s.frereNom ? s.frereNom : '— Non attribué —';
-        html += '<tr><td class="role">' + s.roleNom + '</td><td' + (s.frereNom ? '' : ' class="vide"') + '>' + nom + '</td></tr>';
+  function htmlEntete(titre) {
+    return '<div class="tete"><h1>' + echapperHTML(titre) + '</h1>' +
+      '<p class="sous-titre">Sono &amp; Accueil — généré le ' + new Date().toLocaleDateString('fr-FR') + '</p></div>';
+  }
+
+  function htmlSemaine(sem) {
+    const th = SEMAINES_COULEURS[sem.parite];
+    let html = '<section class="semaine"><div class="sem-entete" style="background:' + th.entete + '">' +
+      echapperHTML(libelleSemaine(sem)) + '</div>';
+    sem.reunions.forEach((r) => {
+      html += '<div class="bloc-reunion"><h2 style="border-bottom-color:' + th.entete + '">' +
+        echapperHTML(capitalise(r.libelle)) + '</h2><table>';
+      lignesRoles(r).forEach((l, i) => {
+        const c = couleurService(l.roleNom, i);
+        const noms = l.noms
+          .map((n) => (n ? echapperHTML(n) : '<span class="vide">— à attribuer —</span>'))
+          .join('<br>');
+        html += '<tr style="background:' + hexRgba(c, th.alpha) + '">' +
+          '<td class="role" style="border-left:6px solid ' + c + '">' + echapperHTML(l.roleNom) + '</td>' +
+          '<td>' + noms + '</td></tr>';
       });
       html += '</table></div>';
     });
-    html += '</div>';
-    return html;
+    return html + '</section>';
+  }
+
+  // Mesure la hauteur réelle de chaque semaine à la largeur utile de la feuille.
+  function mesurerSemaines(semaines, titre, fmt, base) {
+    const largeurPx = (fmt.mm[0] - 2 * fmt.marge) * PX_PAR_MM;
+    const cont = document.createElement('div');
+    cont.className = 'export-doc';
+    cont.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + largeurPx + 'px;font-size:' + base + 'px;';
+    cont.innerHTML = htmlEntete(titre) + semaines.map(htmlSemaine).join('');
+    document.body.appendChild(cont);
+    const tete = cont.querySelector('.tete');
+    const hEntete = tete.offsetHeight + parseFloat(getComputedStyle(tete.querySelector('.sous-titre')).marginBottom || 0);
+    const hauteurs = [...cont.querySelectorAll('.semaine')].map((el) =>
+      el.offsetHeight + parseFloat(getComputedStyle(el).marginBottom || 0));
+    cont.remove();
+    return { hEntete, hauteurs };
+  }
+
+  // Répartition gloutonne : jamais de semaine coupée entre deux feuilles.
+  function repartirSemaines(hauteurs, limite, maxParPage) {
+    const pages = [];
+    let courante = [];
+    let h = 0;
+    for (let i = 0; i < hauteurs.length; i += 1) {
+      if (hauteurs[i] > limite) return null;
+      if (courante.length > 0 && (h + hauteurs[i] > limite || courante.length >= maxParPage)) {
+        pages.push(courante);
+        courante = [];
+        h = 0;
+      }
+      courante.push(i);
+      h += hauteurs[i];
+    }
+    if (courante.length > 0) pages.push(courante);
+    return pages;
+  }
+
+  // Équilibre les feuilles : même nombre de feuilles, mais la charge est répartie au mieux.
+  function equilibrerSemaines(hauteurs, limite, maxParPage) {
+    const depart = repartirSemaines(hauteurs, limite, maxParPage);
+    if (!depart) return null;
+    const k = depart.length;
+    let bas = Math.max(...hauteurs);
+    let haut = limite;
+    let meilleur = depart;
+    for (let it = 0; it < 30; it += 1) {
+      const milieu = (bas + haut) / 2;
+      const p = repartirSemaines(hauteurs, milieu, maxParPage);
+      if (p && p.length <= k) { meilleur = p; haut = milieu; } else { bas = milieu; }
+    }
+    return meilleur;
+  }
+
+  // Choisit la taille de police et le découpage en feuilles. mode : 'auto' | '1' | '2'.
+  function planifierFeuilles(semaines, titre, fmt, mode) {
+    const limiteTotale = (fmt.mm[1] - 2 * fmt.marge) * PX_PAR_MM - 4;
+    const maxParPage = mode === '1' ? 1 : (mode === '2' ? 2 : Infinity);
+    let base = fmt.base;
+    let derniere = null;
+    for (; base >= 6; base -= 0.5) {
+      const m = mesurerSemaines(semaines, titre, fmt, base);
+      const limite = limiteTotale - m.hEntete;
+      const pages = repartirSemaines(m.hauteurs, limite, maxParPage);
+      derniere = { m, limite };
+      if (!pages) continue;
+      if (mode === '2' && pages.length !== Math.ceil(semaines.length / 2)) continue;
+      return { base, pages: equilibrerSemaines(m.hauteurs, limite, maxParPage) };
+    }
+    // Plus petit corps testé : on force un semaine par feuille plutôt que de couper.
+    return { base: 6, pages: semaines.map((_, i) => [i]) };
+  }
+
+  function construireHTMLFeuilles(semaines, titre, fmt, plan) {
+    return plan.pages.map((idxs) =>
+      '<div class="export-doc feuille" style="width:' + fmt.mm[0] + 'mm;height:' + (fmt.mm[1] - 1) + 'mm;padding:' + fmt.marge + 'mm;font-size:' + plan.base + 'px;">' +
+      htmlEntete(titre) + idxs.map((i) => htmlSemaine(semaines[i])).join('') + '</div>'
+    ).join('');
+  }
+
+  // Version continue (JPEG) : une seule image, toutes les semaines à la suite.
+  function construireHTMLContinu(semaines, titre) {
+    return '<div class="export-doc" style="width:760px;padding:24px;font-size:14px;">' +
+      htmlEntete(titre) + semaines.map(htmlSemaine).join('') + '</div>';
   }
 
   function echapperXML(s) {
@@ -1249,20 +1419,32 @@
     parties.push('<text x="20" y="' + y + '" font-size="12" font-family="system-ui, sans-serif" fill="#555">Sono &amp; Accueil — généré le ' + new Date().toLocaleDateString('fr-FR') + '</text>');
     y += 24;
 
-    reunions.forEach((r) => {
-      const hauteurBloc = 36 + r.slots.length * 22;
-      parties.push('<rect x="16" y="' + y + '" width="' + (largeur - 32) + '" height="' + hauteurBloc + '" rx="8" fill="#fff" stroke="#ccc"/>');
-      parties.push('<text x="28" y="' + (y + 24) + '" font-size="15" font-family="system-ui, sans-serif" font-weight="700" fill="#111">' + echapperXML(capitalise(r.libelle)) + '</text>');
-      parties.push('<line x1="28" y1="' + (y + 32) + '" x2="' + (largeur - 28) + '" y2="' + (y + 32) + '" stroke="#6366f1" stroke-width="2"/>');
-      let ligneY = y + 50;
-      r.slots.forEach((s) => {
-        const nom = s.frereNom ? s.frereNom : '— Non attribué —';
-        const couleur = s.frereNom ? '#111' : '#b91c1c';
-        parties.push('<text x="28" y="' + ligneY + '" font-size="12.5" font-family="system-ui, sans-serif" font-weight="600" fill="#111">' + echapperXML(s.roleNom) + '</text>');
-        parties.push('<text x="' + (largeur / 2) + '" y="' + ligneY + '" font-size="12.5" font-family="system-ui, sans-serif" fill="' + couleur + '">' + echapperXML(nom) + '</text>');
-        ligneY += 22;
+    grouperParSemaine(reunions).forEach((sem) => {
+      const th = SEMAINES_COULEURS[sem.parite];
+      parties.push('<rect x="16" y="' + y + '" width="' + (largeur - 32) + '" height="26" rx="6" fill="' + th.entete + '"/>');
+      parties.push('<text x="28" y="' + (y + 18) + '" font-size="13" font-family="system-ui, sans-serif" font-weight="700" fill="#fff">' + echapperXML(libelleSemaine(sem)) + '</text>');
+      y += 30;
+
+      sem.reunions.forEach((r) => {
+        const lignes = lignesRoles(r);
+        const hauteurBloc = 40 + lignes.length * 24;
+        parties.push('<rect x="16" y="' + y + '" width="' + (largeur - 32) + '" height="' + hauteurBloc + '" rx="8" fill="#fff" stroke="#cbd5e1"/>');
+        parties.push('<text x="28" y="' + (y + 24) + '" font-size="15" font-family="system-ui, sans-serif" font-weight="700" fill="#111">' + echapperXML(capitalise(r.libelle)) + '</text>');
+        parties.push('<line x1="28" y1="' + (y + 32) + '" x2="' + (largeur - 28) + '" y2="' + (y + 32) + '" stroke="' + th.entete + '" stroke-width="2"/>');
+        let ligneY = y + 38;
+        lignes.forEach((l, i) => {
+          const c = couleurService(l.roleNom, i);
+          parties.push('<rect x="28" y="' + ligneY + '" width="' + (largeur - 56) + '" height="22" fill="' + c + '" fill-opacity="' + th.alpha + '"/>');
+          parties.push('<rect x="28" y="' + ligneY + '" width="5" height="22" fill="' + c + '"/>');
+          parties.push('<text x="42" y="' + (ligneY + 15) + '" font-size="12.5" font-family="system-ui, sans-serif" font-weight="700" fill="#111">' + echapperXML(l.roleNom) + '</text>');
+          const nomsTxt = l.noms.map((n) => n || '— à attribuer —').join(' / ');
+          const manque = l.noms.some((n) => !n);
+          parties.push('<text x="' + (largeur / 2) + '" y="' + (ligneY + 15) + '" font-size="12.5" font-family="system-ui, sans-serif" fill="' + (manque ? '#b91c1c' : '#111') + '">' + echapperXML(nomsTxt) + '</text>');
+          ligneY += 24;
+        });
+        y += hauteurBloc + 8;
       });
-      y += hauteurBloc + 16;
+      y += 10;
     });
 
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + largeur + '" height="' + (y + 16) + '" viewBox="0 0 ' + largeur + ' ' + (y + 16) + '">' +
@@ -1283,46 +1465,54 @@
       return null;
     }
     const titre = construireTitrePublication(reunions, $('pub-scope').value);
-    return { reunions, titre, html: construireHTMLExport(reunions, titre) };
+    return { reunions, titre, semaines: grouperParSemaine(reunions) };
+  }
+
+  // Feuilles paginées (impression et PDF).
+  function preparerFeuilles() {
+    const exp = preparerExport();
+    if (!exp) return null;
+    const formatCle = $('pub-format').value;
+    const fmt = FORMATS_FEUILLE[formatCle];
+    const plan = planifierFeuilles(exp.semaines, exp.titre, fmt, $('pub-semaines').value);
+    return { exp, formatCle, fmt, plan, html: construireHTMLFeuilles(exp.semaines, exp.titre, fmt, plan) };
   }
 
   $('btn-imprimer').addEventListener('click', () => {
-    const exp = preparerExport();
-    if (!exp) return;
+    const f = preparerFeuilles();
+    if (!f) return;
     const fenetre = window.open('', '_blank');
     if (!fenetre) { alert('Le navigateur a bloqué la fenêtre d\'impression (pop-up).'); return; }
     fenetre.document.write(
-      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>' + exp.titre +
-      '</title><style>' + STYLE_EXPORT + '</style></head><body>' + exp.html + '</body></html>'
+      '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>' + echapperHTML(f.exp.titre) + '</title><style>' +
+      '@page { size: ' + f.formatCle + ' portrait; margin: 0; }' +
+      'html, body { margin: 0; padding: 0; background: #fff; }' +
+      '@media print { .export-doc.feuille { break-after: page; page-break-after: always; } .export-doc.feuille:last-child { break-after: auto; page-break-after: auto; } }' +
+      STYLE_EXPORT + '</style></head><body>' + f.html + '</body></html>'
     );
     fenetre.document.close();
     setTimeout(() => { fenetre.focus(); fenetre.print(); }, 300);
   });
 
   $('btn-pdf').addEventListener('click', async () => {
-    const exp = preparerExport();
-    if (!exp) return;
+    const f = preparerFeuilles();
+    if (!f) return;
     const zone = $('zone-export');
-    zone.innerHTML = exp.html;
+    zone.innerHTML = f.html;
     const btn = $('btn-pdf');
     btn.disabled = true;
     try {
-      const canvas = await html2canvas(zone, { scale: 2, backgroundColor: '#ffffff' });
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let positionY = 0;
-      let pageIndex = 0;
-      while (positionY < imgHeight && pageIndex < 20) {
-        if (pageIndex > 0) pdf.addPage();
-        pdf.addImage(canvas, 'PNG', 0, -positionY, imgWidth, imgHeight);
-        positionY += pageHeight;
-        pageIndex += 1;
+      const pdf = new jsPDF({ unit: 'mm', format: f.formatCle.toLowerCase(), orientation: 'portrait' });
+      const largeurPage = pdf.internal.pageSize.getWidth();
+      const feuilles = zone.querySelectorAll('.feuille');
+      for (let i = 0; i < feuilles.length; i += 1) {
+        const canvas = await html2canvas(feuilles[i], { scale: 2, backgroundColor: '#ffffff' });
+        if (i > 0) pdf.addPage();
+        const hauteurImg = (canvas.height * largeurPage) / canvas.width;
+        pdf.addImage(canvas, 'PNG', 0, 0, largeurPage, hauteurImg);
       }
-      pdf.save(nomFichier(exp.titre, 'pdf'));
+      pdf.save(nomFichier(f.exp.titre, 'pdf'));
     } catch (err) {
       alert('Erreur lors de la génération du PDF : ' + err.message);
     } finally {
@@ -1335,7 +1525,7 @@
     const exp = preparerExport();
     if (!exp) return;
     const zone = $('zone-export');
-    zone.innerHTML = exp.html;
+    zone.innerHTML = construireHTMLContinu(exp.semaines, exp.titre);
     const btn = $('btn-jpeg');
     btn.disabled = true;
     try {
