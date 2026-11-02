@@ -1490,10 +1490,11 @@
     .ancien-doc .ent { background: #ff9900; color: #674ea7; font-weight: 700; border: 1px solid #000; white-space: normal; line-height: 1.1; }
     .ancien-doc .ent-perches { background: #674ea7; color: #fff; font-weight: 700; font-size: 1.2em; border: 1px solid #000; }
     .ancien-doc .ent-partie { background: #ffd965; color: #674ea7; font-weight: 700; border: 1px solid #000; }
-    .ancien-doc .nom { border: 1px solid #000; background: #fff; white-space: normal; overflow-wrap: normal; line-height: 1.15; }
+    .ancien-doc .nom { border: 1px solid #000; background: #fff; }
+    .ancien-doc .nom.long { font-size: 0.82em; }
     .ancien-doc .nom, .ancien-doc .date { padding-top: var(--pad, 0.25em); padding-bottom: var(--pad, 0.25em); }
     .ancien-doc .nom.vide { color: #b91c1c; font-style: italic; }
-    .ancien-doc .date { border: 1px solid #000; background: #fff; }
+    .ancien-doc .date { border: 1px solid #000; background: #fff; font-weight: 700; }
     .ancien-doc .sep td.gris { background: #999999; border: 1px solid #000; height: 0.75em; padding: 0; }
     .ancien-doc .sep td { height: 0.75em; padding: 0; }
   `;
@@ -1566,7 +1567,7 @@
         const noms = parRole.get(c.roleId) || [];
         for (let k = 0; k < c.nb; k += 1) {
           const n = noms[k];
-          h += n ? '<td class="nom">' + echapperHTML(n) + '</td>' : '<td class="nom vide">—</td>';
+          h += n ? '<td class="nom' + (n.length >= 13 ? ' long' : '') + '">' + echapperHTML(n) + '</td>' : '<td class="nom vide">—</td>';
         }
       });
       h += '<td class="cadre"></td></tr>';
@@ -1624,7 +1625,7 @@
       // Aère les lignes pour occuper la feuille (comme l'original), sans dépasser 1,2 em de marge.
       const lignesParPage = Math.max(...equilibre.map((idxs) => idxs.reduce((t, i) => t + semaines[i].reunions.length, 0)));
       const occupe = Math.max(...equilibre.map((idxs) => idxs.reduce((t, i) => t + hauteurs[i], 0)));
-      const pad = Math.min(1.6, 0.25 + ((limite - occupe) / Math.max(1, lignesParPage)) / 2 / base * 0.9);
+      const pad = Math.min(0.4, 0.25 + ((limite - occupe) / Math.max(1, lignesParPage)) / 2 / base * 0.9);
       return { base, pad, pages: equilibre };
     }
     return { base: 6, pad: 0.25, pages: semaines.map((_, i) => [i]) };
