@@ -276,6 +276,10 @@
           <option value="jour">Une date</option>
         </select>
         <select id="pub-date" class="cache"></select>
+        <select id="pub-style" title="Présentation du document (impression et PDF)">
+          <option value="nouveau">Présentation : nouvelle (couleurs)</option>
+          <option value="ancien">Présentation : ancienne (tableau Excel)</option>
+        </select>
         <select id="pub-format" title="Format de la feuille (impression et PDF)">
           <option value="A4">Feuille A4</option>
           <option value="A5">Feuille A5</option>
@@ -1272,6 +1276,10 @@
     chargerProgramme();
   });
 
+  $('pub-style').addEventListener('change', () => {
+    $('pub-semaines').classList.toggle('cache', $('pub-style').value === 'ancien');
+  });
+
   $('pub-scope').addEventListener('change', () => {
     $('pub-date').classList.toggle('cache', $('pub-scope').value === 'mois');
   });
@@ -1468,14 +1476,181 @@
     return { reunions, titre, semaines: grouperParSemaine(reunions) };
   }
 
+  // ===== Ancienne présentation (reprise du tableau Excel « PROGRAMME SONORISATION_ACCUEIL ») =====
+
+  const STYLE_ANCIEN = `
+    .ancien-doc { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #000; box-sizing: border-box; }
+    .ancien-doc * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ancien-doc table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .ancien-doc td, .ancien-doc th { font-size: 1em; border: none; text-align: center; vertical-align: middle; padding: 0.25em 0.2em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 400; }
+    .ancien-doc .cadre { background: #ff0000; width: 2.2%; border: none; }
+    .ancien-doc .cadre-haut { background: #674ea7; width: 2.2%; border: none; }
+    .ancien-doc .titre { background: #ff0000; color: #fff; font-size: 1.2em; padding: 0.1em; }
+    .ancien-doc .mois { background: #674ea7; color: #fff; font-size: 1.35em; padding: 0.1em; }
+    .ancien-doc .ent { background: #ff9900; color: #674ea7; font-weight: 700; border: 1px solid #000; white-space: normal; line-height: 1.1; }
+    .ancien-doc .ent-perches { background: #674ea7; color: #fff; font-weight: 700; font-size: 1.2em; border: 1px solid #000; }
+    .ancien-doc .ent-partie { background: #ffd965; color: #674ea7; font-weight: 700; border: 1px solid #000; }
+    .ancien-doc .nom { border: 1px solid #000; background: #fff; white-space: normal; overflow-wrap: normal; line-height: 1.15; }
+    .ancien-doc .nom, .ancien-doc .date { padding-top: var(--pad, 0.25em); padding-bottom: var(--pad, 0.25em); }
+    .ancien-doc .nom.vide { color: #b91c1c; font-style: italic; }
+    .ancien-doc .date { border: 1px solid #000; background: #fff; }
+    .ancien-doc .sep td.gris { background: #999999; border: 1px solid #000; height: 0.75em; padding: 0; }
+    .ancien-doc .sep td { height: 0.75em; padding: 0; }
+  `;
+
+  (function injecterStyleAncien() {
+    const st = document.createElement('style');
+    st.textContent = STYLE_ANCIEN;
+    document.head.appendChild(st);
+  })();
+
+  const JOURS_SEMAINE = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+  function libelleDateAncien(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    return JOURS_SEMAINE[d.getDay()] + ' ' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // Colonnes du tableau, déduites des services (Perches : 2 colonnes par partie).
+  function colonnesAncien(reunions) {
+    const ref = reunions[0];
+    const roles = [];
+    const vus = new Map();
+    ref.slots.forEach((s) => {
+      if (!vus.has(s.roleId)) { vus.set(s.roleId, roles.length); roles.push({ roleId: s.roleId, nom: s.roleNom, nb: 0 }); }
+      roles[vus.get(s.roleId)].nb += 1;
+    });
+    return roles.map((r) => {
+      const n = r.nom;
+      if (/^Perches\s*-\s*/i.test(n)) return Object.assign(r, { groupe: 'Perches', sous: n.replace(/^Perches\s*-\s*/i, '') });
+      if (/^Accueil\s*-\s*/i.test(n)) return Object.assign(r, { groupe: 'Accueil', sous: n.replace(/^Accueil\s*-\s*/i, '') });
+      if (/^Estrade\s*-\s*Tablette$/i.test(n)) return Object.assign(r, { groupe: null, sous: 'Tablette' });
+      return Object.assign(r, { groupe: null, sous: n });
+    });
+  }
+
+  function enteteAncien(cols, titreMois) {
+    const nbCols = 1 + cols.reduce((t, c) => t + c.nb, 0);
+    let h = '<tr><td class="cadre-haut"></td><td class="titre" colspan="' + nbCols + '">PROGRAMME SONORISATION_ACCUEIL</td><td class="cadre-haut"></td></tr>';
+    h += '<tr><td class="cadre-haut"></td><td class="mois" colspan="' + nbCols + '">' + echapperHTML(titreMois) + '</td><td class="cadre-haut"></td></tr>';
+    // Ligne 1 des en-têtes : services seuls (sur 2 lignes) ou groupes (Perches, Accueil).
+    let l1 = '<tr><td class="cadre" rowspan="2"></td><th class="ent" rowspan="2">Date</th>';
+    let l2 = '<tr>';
+    for (let i = 0; i < cols.length; i += 1) {
+      const c = cols[i];
+      if (!c.groupe) { l1 += '<th class="ent" rowspan="2" colspan="' + c.nb + '">' + echapperHTML(c.sous) + '</th>'; continue; }
+      let j = i; let largeur = 0;
+      while (j < cols.length && cols[j].groupe === c.groupe) { largeur += cols[j].nb; j += 1; }
+      l1 += '<th class="' + (c.groupe === 'Perches' ? 'ent-perches' : 'ent') + '" colspan="' + largeur + '">' + echapperHTML(c.groupe) + '</th>';
+      for (let k = i; k < j; k += 1) {
+        l2 += '<th class="' + (c.groupe === 'Perches' ? 'ent-partie' : 'ent') + '" colspan="' + cols[k].nb + '">' + echapperHTML(cols[k].sous) + '</th>';
+      }
+      i = j - 1;
+    }
+    l1 += '<td class="cadre" rowspan="2"></td></tr>';
+    l2 += '</tr>';
+    return h + l1 + l2;
+  }
+
+  function lignesSemaineAncien(sem, cols) {
+    const nbCols = 1 + cols.reduce((t, c) => t + c.nb, 0);
+    let h = '';
+    sem.reunions.forEach((r) => {
+      const parRole = new Map();
+      r.slots.forEach((s) => {
+        if (!parRole.has(s.roleId)) parRole.set(s.roleId, []);
+        parRole.get(s.roleId).push(s.frereNom || null);
+      });
+      h += '<tr><td class="cadre"></td><td class="date">' + libelleDateAncien(r.date) + '</td>';
+      cols.forEach((c) => {
+        const noms = parRole.get(c.roleId) || [];
+        for (let k = 0; k < c.nb; k += 1) {
+          const n = noms[k];
+          h += n ? '<td class="nom">' + echapperHTML(n) + '</td>' : '<td class="nom vide">—</td>';
+        }
+      });
+      h += '<td class="cadre"></td></tr>';
+      h += '<tr class="sep"><td class="cadre"></td>' + '<td class="gris"></td>'.repeat(nbCols) + '<td class="cadre"></td></tr>';
+    });
+    return h;
+  }
+
+  function colgroupAncien(cols) {
+    const nb = cols.reduce((t, c) => t + c.nb, 0);
+    const largeurCellule = (100 - 2 * 2.2 - 8.5) / nb;
+    return '<colgroup><col style="width:2.2%"><col style="width:8.5%">' +
+      ('<col style="width:' + largeurCellule.toFixed(3) + '%">').repeat(nb) + '<col style="width:2.2%"></colgroup>';
+  }
+
+  function tableAncien(cols, titreMois, semaines) {
+    return '<table>' + colgroupAncien(cols) + '<tbody>' + enteteAncien(cols, titreMois) +
+      semaines.map((s) => lignesSemaineAncien(s, cols)).join('') + '</tbody></table>';
+  }
+
+  function titreMoisAncien(reunions) {
+    const d = new Date(reunions[0].date + 'T00:00:00');
+    return MOIS_NOMS[d.getMonth() + 1] + ' ' + d.getFullYear();
+  }
+
+  // Pagination paysage : jamais de semaine coupée, en-tête répété sur chaque feuille.
+  function planifierAncien(semaines, cols, titreMois, fmt) {
+    const largeurPx = (fmt.mm[1] - 2 * fmt.marge) * PX_PAR_MM;   // paysage : largeur = grand côté
+    const hauteurPx = (fmt.mm[0] - 2 * fmt.marge) * PX_PAR_MM - 4;
+    for (let base = fmt.base + 1; base >= 6; base -= 0.5) {
+      const cont = document.createElement('div');
+      cont.className = 'ancien-doc';
+      cont.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + largeurPx + 'px;font-size:' + base + 'px;';
+      cont.innerHTML = '<table>' + colgroupAncien(cols) + '<tbody>' + enteteAncien(cols, titreMois) + '</tbody></table>' +
+        semaines.map((s) => '<table>' + colgroupAncien(cols) + '<tbody>' + lignesSemaineAncien(s, cols) + '</tbody></table>').join('');
+      document.body.appendChild(cont);
+      // Marge de 8 % : le rendu de la fenêtre d'impression diffère légèrement de la mesure.
+      const tronque = [...cont.querySelectorAll('th, td.date, td.nom')].some((c) => {
+        const cs = getComputedStyle(c);
+        const boite = c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        const r = document.createRange();
+        r.selectNodeContents(c);
+        return r.getBoundingClientRect().width > boite * 0.92;
+      });
+      const tables = cont.querySelectorAll('table');
+      const hEntete = tables[0].offsetHeight;
+      const hauteurs = [...tables].slice(1).map((t) => t.offsetHeight);
+      const nbLignes = cont.querySelectorAll('td.date').length;
+      cont.remove();
+      if (tronque) continue;
+      const limite = hauteurPx - hEntete;
+      const pages = repartirSemaines(hauteurs, limite, Infinity);
+      if (!pages) continue;
+      const equilibre = equilibrerSemaines(hauteurs, limite, Infinity);
+      // Aère les lignes pour occuper la feuille (comme l'original), sans dépasser 1,2 em de marge.
+      const lignesParPage = Math.max(...equilibre.map((idxs) => idxs.reduce((t, i) => t + semaines[i].reunions.length, 0)));
+      const occupe = Math.max(...equilibre.map((idxs) => idxs.reduce((t, i) => t + hauteurs[i], 0)));
+      const pad = Math.min(1.6, 0.25 + ((limite - occupe) / Math.max(1, lignesParPage)) / 2 / base * 0.9);
+      return { base, pad, pages: equilibre };
+    }
+    return { base: 6, pad: 0.25, pages: semaines.map((_, i) => [i]) };
+  }
+
+  function construireHTMLAncien(exp, fmt) {
+    const cols = colonnesAncien(exp.reunions);
+    const titreMois = titreMoisAncien(exp.reunions);
+    const plan = planifierAncien(exp.semaines, cols, titreMois, fmt);
+    return plan.pages.map((idxs) =>
+      '<div class="ancien-doc feuille" style="width:' + fmt.mm[1] + 'mm;height:' + (fmt.mm[0] - 1) + 'mm;padding:' + fmt.marge + 'mm;font-size:' + plan.base + 'px;overflow:hidden;--pad:' + plan.pad.toFixed(3) + 'em;">' +
+      tableAncien(cols, titreMois, idxs.map((i) => exp.semaines[i])) + '</div>'
+    ).join('');
+  }
+
   // Feuilles paginées (impression et PDF).
   function preparerFeuilles() {
     const exp = preparerExport();
     if (!exp) return null;
     const formatCle = $('pub-format').value;
     const fmt = FORMATS_FEUILLE[formatCle];
+    if ($('pub-style').value === 'ancien') {
+      return { exp, formatCle, fmt, orientation: 'landscape', html: construireHTMLAncien(exp, fmt) };
+    }
     const plan = planifierFeuilles(exp.semaines, exp.titre, fmt, $('pub-semaines').value);
-    return { exp, formatCle, fmt, plan, html: construireHTMLFeuilles(exp.semaines, exp.titre, fmt, plan) };
+    return { exp, formatCle, fmt, orientation: 'portrait', plan, html: construireHTMLFeuilles(exp.semaines, exp.titre, fmt, plan) };
   }
 
   $('btn-imprimer').addEventListener('click', () => {
@@ -1485,10 +1660,10 @@
     if (!fenetre) { alert('Le navigateur a bloqué la fenêtre d\'impression (pop-up).'); return; }
     fenetre.document.write(
       '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>' + echapperHTML(f.exp.titre) + '</title><style>' +
-      '@page { size: ' + f.formatCle + ' portrait; margin: 0; }' +
+      '@page { size: ' + f.formatCle + ' ' + f.orientation + '; margin: 0; }' +
       'html, body { margin: 0; padding: 0; background: #fff; }' +
-      '@media print { .export-doc.feuille { break-after: page; page-break-after: always; } .export-doc.feuille:last-child { break-after: auto; page-break-after: auto; } }' +
-      STYLE_EXPORT + '</style></head><body>' + f.html + '</body></html>'
+      '@media print { .feuille { break-after: page; page-break-after: always; } .feuille:last-child { break-after: auto; page-break-after: auto; } }' +
+      STYLE_EXPORT + STYLE_ANCIEN + '</style></head><body>' + f.html + '</body></html>'
     );
     fenetre.document.close();
     setTimeout(() => { fenetre.focus(); fenetre.print(); }, 300);
@@ -1503,7 +1678,7 @@
     btn.disabled = true;
     try {
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ unit: 'mm', format: f.formatCle.toLowerCase(), orientation: 'portrait' });
+      const pdf = new jsPDF({ unit: 'mm', format: f.formatCle.toLowerCase(), orientation: f.orientation });
       const largeurPage = pdf.internal.pageSize.getWidth();
       const feuilles = zone.querySelectorAll('.feuille');
       for (let i = 0; i < feuilles.length; i += 1) {
